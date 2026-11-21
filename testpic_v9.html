@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空光污染检测与分析工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #0d041c;
+            /* 更深的紫色作为整体背景 */
+            color: #e6e6e6;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #12062b;
+            /* 参考色作为主容器背景 */
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #0f3460;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #4cc9f0;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 16px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .right-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .control-panel {
+            background-color: #1c0849;
+            /* 稍浅的紫色作为控制面板背景 */
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .file-upload {
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 10px;
+            background-color: #1a1a2e;
+            border: 2px dashed #4cc9f0;
+            border-radius: 5px;
+            color: #e6e6e6;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .preview-container {
+            width: 100%;
+            height: 250px;
+            background-color: #1a1a2e;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3d8b40;
+        }
+
+        .btn-secondary {
+            background-color: #FF9800;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e68a00;
+        }
+
+        .btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        .results-panel {
+            background-color: #1c0849;
+            /* 控制面板背景色 */
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: #4cc9f0;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1a1a2e;
+        }
+
+        .results-text {
+            background-color: #1a1a2e;
+            border-radius: 5px;
+            padding: 15px;
+            height: 350px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background-color: #1a1a2e;
+            padding: 12px;
+            border-radius: 5px;
+            border-left: 4px solid #4cc9f0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .color-display {
+            background-color: #1c0849;
+            /* 控制面板背景色 */
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .color-block {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 15px;
+            border-radius: 10px;
+            border: 3px solid #1a1a2e;
+            background-color: #333;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .color-block:hover {
+            transform: scale(1.05);
+        }
+
+        .color-info {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        .star-results {
+            background-color: #1c0849;
+            /* 控制面板背景色 */
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .star-count {
+            font-size: 20px;
+            color: #ff4757;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .processing-content {
+            background-color: #12062b;
+            /* 主容器背景色 */
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #0f3460;
+            border-top: 5px solid #4cc9f0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .star-points-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #1a1a2e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .algorithm-info {
+            background-color: #1c0849;
+            /* 控制面板背景色 */
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+        }
+
+        .recommendation-box {
+            background-color: #1a1a2e;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .recommendation-title {
+            font-size: 16px;
+            color: #4cc9f0;
+            margin-bottom: 10px;
+        }
+
+        .pollution-level {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .level-1 {
+            color: #00ff00;
+            background-color: rgba(0, 255, 0, 0.1);
+        }
+
+        .level-2 {
+            color: #40ff00;
+            background-color: rgba(64, 255, 0, 0.1);
+        }
+
+        .level-3 {
+            color: #80ff00;
+            background-color: rgba(128, 255, 0, 0.1);
+        }
+
+        .level-4 {
+            color: #c0ff00;
+            background-color: rgba(192, 255, 0, 0.1);
+        }
+
+        .level-5 {
+            color: #ffff00;
+            background-color: rgba(255, 255, 0, 0.1);
+        }
+
+        .level-6 {
+            color: #ffc000;
+            background-color: rgba(255, 192, 0, 0.1);
+        }
+
+        .level-7 {
+            color: #ff8000;
+            background-color: rgba(255, 128, 0, 0.1);
+        }
+
+        .level-8 {
+            color: #ff4000;
+            background-color: rgba(255, 64, 0, 0.1);
+        }
+
+        .level-9 {
+            color: #ff0000;
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+
+        /* 可见星体区域样式 */
+        .visible-stars-panel {
+            background-color: #1c0849;
+            /* 控制面板背景色 */
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .visible-stars-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #1a1a2e;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .star-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            border-left: 4px solid #4cc9f0;
+            background-color: rgba(26, 26, 46, 0.7);
+        }
+
+        .star-item.visible {
+            border-left: 4px solid #ff4757;
+            background-color: rgba(255, 71, 87, 0.1);
+        }
+
+        .star-item.invisible {
+            border-left: 4px solid #888;
+            background-color: rgba(136, 136, 136, 0.1);
+        }
+
+        .star-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .star-details {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        .star-constellation {
+            display: inline-block;
+            background-color: #0f3460;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+
+        .star-magnitude {
+            display: inline-block;
+            font-size: 11px;
+            color: #ffcc00;
+        }
+
+        .star-visible-marker {
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .star-visible-marker.visible {
+            color: #ff4757;
+        }
+
+        .star-visible-marker.invisible {
+            color: #888;
+        }
+
+        .location-info {
+            background-color: #1a1a2e;
+            border-radius: 5px;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4cc9f0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>星空光污染检测与分析工具</h1>
+            <p class="subtitle">分析星空图片，评估光污染等级，提供拍摄建议</p>
+        </header>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="control-panel">
+                    <h2 class="section-title">图片上传</h2>
+                    <div class="file-upload">
+                        <input type="file" id="imageInput" class="file-input" accept="image/*">
+                    </div>
+
+                    <div class="preview-container">
+                        <img id="imagePreview" class="preview-image" src="" alt="图片预览">
+                        <div id="noPreview">暂无图片</div>
+                    </div>
+
+                    <div class="buttons">
+                        <button id="analyzeBtn" class="btn btn-primary" disabled>分析图片</button>
+                        <button id="saveImageBtn" class="btn btn-secondary" disabled>保存标记图片</button>
+                    </div>
+
+                    <div id="imageInfo" class="stat-item">
+                        <div class="stat-label">图片信息</div>
+                        <div class="stat-value">未选择图片</div>
+                    </div>
+                </div>
+
+                <div class="results-panel">
+                    <h2 class="section-title">分析结果</h2>
+                    <div id="resultsText" class="results-text">请先上传并分析图片...</div>
+
+                    <h3 class="section-title">统计结果</h3>
+                    <div class="stats-grid">
+                        <div id="imageTypeStat" class="stat-item">
+                            <div class="stat-label">图片类型</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="avgRgbStat" class="stat-item">
+                            <div class="stat-label">平均RGB值</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="avgHexStat" class="stat-item">
+                            <div class="stat-label">平均16进制</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="gradientStat" class="stat-item">
+                            <div class="stat-label">递变量c</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="yangyangGrayStat" class="stat-item">
+                            <div class="stat-label">杨洋的灰度值</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="standardGrayStat" class="stat-item">
+                            <div class="stat-label">标准灰度值</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="pollutionLevelStat" class="stat-item">
+                            <div class="stat-label">光污染等级</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="color-display">
+                    <h2 class="section-title">平均颜色色块</h2>
+                    <div id="colorBlock" class="color-block"></div>
+                    <p class="color-info">点击色块可复制颜色代码</p>
+                    <div id="colorInfo" class="stat-item">
+                        <div class="stat-label">当前颜色</div>
+                        <div class="stat-value">#000000</div>
+                    </div>
+                </div>
+
+                <div class="star-results">
+                    <h2 class="section-title">星星检测结果</h2>
+                    <div id="starCount" class="star-count">检测到的星星数量: -</div>
+
+                    <div id="detectionParams" class="stat-item">
+                        <div class="stat-label">检测参数</div>
+                        <div class="stat-value">亮度阈值: 30, 背景差异: 5, 搜索半径: 10</div>
+                    </div>
+
+                    <div id="excludedAreaStat" class="stat-item">
+                        <div class="stat-label">星星排除区域</div>
+                        <div class="stat-value">-</div>
+                    </div>
+
+                    <div id="starPointsContainer" style="display: none;">
+                        <div class="stat-label">星星坐标 (前10个)</div>
+                        <div id="starPointsList" class="star-points-list"></div>
+                    </div>
+                </div>
+
+                <!-- 新增：可见星体信息区域 -->
+                <div class="visible-stars-panel" id="visibleStarsPanel" style="display: none;">
+                    <h2 class="section-title">今晚可见星体</h2>
+                    <div class="location-info">
+                        <div class="stat-label">地理位置</div>
+                        <div class="stat-value">中国上海 (31.23°N, 121.47°E)</div>
+                        <div class="stat-label">观测时间</div>
+                        <div id="observationTime" class="stat-value">-</div>
+                        <div class="stat-label">根据光污染等级筛选</div>
+                        <div id="visibilityFilter" class="stat-value">-</div>
+                    </div>
+
+                    <div id="visibleStarsList" class="visible-stars-list">
+                        <!-- 可见星体列表将在这里动态生成 -->
+                    </div>
+                </div>
+
+                <div id="recommendationContainer" style="display: none;">
+                    <div class="recommendation-box">
+                        <div class="recommendation-title">光污染等级评估</div>
+                        <div id="pollutionLevelDisplay" class="pollution-level">-</div>
+                        <div id="pollutionDescription" class="stat-value">-</div>
+                    </div>
+
+                    <div class="recommendation-box">
+                        <div class="recommendation-title">可见星座推断</div>
+                        <div id="constellationInfo" class="stat-value">-</div>
+                    </div>
+
+                    <div class="recommendation-box">
+                        <div class="recommendation-title">相机参数建议</div>
+                        <div id="cameraAdvice" class="stat-value">-</div>
+                    </div>
+                </div>
+
+                <div class="algorithm-info">
+                    <p><strong>算法说明：</strong></p>
+                    <p>1. 严格按照原始Python代码的算法逻辑实现</p>
+                    <p>2. 使用100x100像素块遍历所有P点</p>
+                    <p>3. 完整实现四个方向的d值和delta值计算</p>
+                    <p>4. 完整实现减去背景的星星检测算法</p>
+                    <p>5. 新增标准灰度值计算：排除星星区域后的平均灰度值</p>
+                    <p>6. 新增光污染等级评估（1-9级）、可见星座推断和相机参数建议</p>
+                    <p>7. 新增：根据日期和地理位置推算可见星体，结合光污染等级筛选可见目标</p>
+                    <p>8.
+                        刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习刻意练习！！！
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="processingOverlay" class="processing-overlay">
+        <div class="processing-content">
+            <div class="spinner"></div>
+            <h3>处理中...</h3>
+            <p id="processingMessage">正在分析图片，请稍候</p>
+            <p id="processingProgress"></p>
+        </div>
+    </div>
+
+    <canvas id="imageCanvas" style="display: none;"></canvas>
+    <canvas id="starCanvas" style="display: none;"></canvas>
+    <canvas id="subtractedCanvas" style="display: none;"></canvas>
+    <canvas id="starMaskCanvas" style="display: none;"></canvas>
+
+    <script>
+        // 全局变量
+        let originalImage = null;
+        let imageData = null;
+        let subtractedImageData = null;
+        let analysisResult = null;
+        let starCenters = [];
+        let starCount = 0;
+        let starMarkedImageUrl = null; // 存储标记星星后的图片URL
+        let starMask = null; // 星星区域掩码
+        let standardGrayValue = 0; // 标准灰度值
+        let excludedPixelCount = 0; // 被排除的像素数量
+        let pollutionLevel = 0; // 光污染等级
+        let pollutionDescription = ""; // 光污染描述
+        let isGradientImage = false; // 是否为渐变型图片
+
+        // DOM元素
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const noPreview = document.getElementById('noPreview');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const saveImageBtn = document.getElementById('saveImageBtn');
+        const imageInfo = document.getElementById('imageInfo');
+        const resultsText = document.getElementById('resultsText');
+        const imageTypeStat = document.getElementById('imageTypeStat');
+        const avgRgbStat = document.getElementById('avgRgbStat');
+        const avgHexStat = document.getElementById('avgHexStat');
+        const gradientStat = document.getElementById('gradientStat');
+        const yangyangGrayStat = document.getElementById('yangyangGrayStat');
+        const standardGrayStat = document.getElementById('standardGrayStat');
+        const pollutionLevelStat = document.getElementById('pollutionLevelStat');
+        const colorBlock = document.getElementById('colorBlock');
+        const colorInfo = document.getElementById('colorInfo');
+        const starCountDisplay = document.getElementById('starCount');
+        const detectionParams = document.getElementById('detectionParams');
+        const excludedAreaStat = document.getElementById('excludedAreaStat');
+        const starPointsContainer = document.getElementById('starPointsContainer');
+        const starPointsList = document.getElementById('starPointsList');
+        const processingOverlay = document.getElementById('processingOverlay');
+        const processingMessage = document.getElementById('processingMessage');
+        const processingProgress = document.getElementById('processingProgress');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const starCanvas = document.getElementById('starCanvas');
+        const subtractedCanvas = document.getElementById('subtractedCanvas');
+        const starMaskCanvas = document.getElementById('starMaskCanvas');
+        const recommendationContainer = document.getElementById('recommendationContainer');
+        const pollutionLevelDisplay = document.getElementById('pollutionLevelDisplay');
+        const pollutionDescriptionDisplay = document.getElementById('pollutionDescription');
+        const constellationInfo = document.getElementById('constellationInfo');
+        const cameraAdvice = document.getElementById('cameraAdvice');
+        const visibleStarsPanel = document.getElementById('visibleStarsPanel');
+        const visibleStarsList = document.getElementById('visibleStarsList');
+        const observationTime = document.getElementById('observationTime');
+        const visibilityFilter = document.getElementById('visibilityFilter');
+
+        // 星座数据库（基于光污染等级1-9级）
+        const constellationDatabase = {
+            1: {
+                nakedEye: ["所有主要星座", "银河清晰可见", "黄道光", "对日照"],
+                telescope: ["所有梅西耶天体", "行星状星云", "球状星团", "星系", "彗星"],
+                description: "极佳观测条件，肉眼可见银河细节，极限星等7.5+"
+            },
+            2: {
+                nakedEye: ["所有主要星座", "银河清晰", "黄道光可见"],
+                telescope: ["所有明亮梅西耶天体", "行星状星云", "球状星团", "星系"],
+                description: "优秀观测条件，肉眼可见银河结构，极限星等7.0+"
+            },
+            3: {
+                nakedEye: ["猎户座", "大熊座", "小熊座", "天鹅座", "天鹰座", "天琴座", "天蝎座", "牧夫座"],
+                telescope: ["大多数梅西耶天体", "主要星云和星团", "明亮星系"],
+                description: "良好乡村天空，银河可见但较暗，极限星等6.5"
+            },
+            4: {
+                nakedEye: ["猎户座", "大熊座", "小熊座", "天鹅座", "天鹰座", "天琴座"],
+                telescope: ["明亮梅西耶天体", "主要星云和星团", "行星和月球"],
+                description: "乡村天空，银河微弱可见，极限星等6.0"
+            },
+            5: {
+                nakedEye: ["猎户座", "大熊座", "小熊座", "天鹅座"],
+                telescope: ["最亮梅西耶天体", "月球、行星、最亮星团"],
+                description: "过渡型乡村/郊区天空，极限星等5.5"
+            },
+            6: {
+                nakedEye: ["猎户座", "大熊座", "小熊座"],
+                telescope: ["月球、行星、最亮星团", "明亮星云"],
+                description: "郊区天空，仅最亮天体可见，极限星等5.0"
+            },
+            7: {
+                nakedEye: ["猎户座", "大熊座"],
+                telescope: ["月球、行星", "最亮星团M13、M31"],
+                description: "明亮郊区/城市过渡区，极限星等4.5"
+            },
+            8: {
+                nakedEye: ["猎户座腰带", "北斗七星"],
+                telescope: ["月球、金星、木星、土星", "最亮深空天体"],
+                description: "城市天空，仅最亮恒星可见，极限星等4.0"
+            },
+            9: {
+                nakedEye: ["仅最亮恒星", "行星"],
+                telescope: ["月球", "明亮行星"],
+                description: "严重光污染城市，极限星等3.0以下"
+            }
+        };
+
+        // 相机参数建议数据库（1-9级）
+        const cameraAdviceDatabase = {
+            1: {
+                iso: "800-1600",
+                shutter: "30-60秒",
+                aperture: "f/2.8-f/4",
+                advice: "使用低ISO以减少噪点，长曝光捕捉暗弱天体",
+                tips: ["使用延时摄影", "拍摄RAW格式", "无需光污染滤镜"]
+            },
+            2: {
+                iso: "800-1600",
+                shutter: "20-40秒",
+                aperture: "f/2.8-f/4",
+                advice: "适当提高ISO，中等曝光时间",
+                tips: ["使用光污染滤镜", "拍摄RAW格式", "多帧叠加降噪"]
+            },
+            3: {
+                iso: "1600-3200",
+                shutter: "15-30秒",
+                aperture: "f/2.8最大光圈",
+                advice: "需要较高ISO，缩短曝光时间",
+                tips: ["使用光污染滤镜", "多帧叠加", "后期降噪处理"]
+            },
+            4: {
+                iso: "1600-3200",
+                shutter: "10-25秒",
+                aperture: "最大光圈",
+                advice: "较高ISO设置，中等曝光时间",
+                tips: ["必须使用光污染滤镜", "多帧叠加", "强力后期处理"]
+            },
+            5: {
+                iso: "3200-6400",
+                shutter: "8-20秒",
+                aperture: "最大光圈",
+                advice: "高ISO设置，缩短曝光时间",
+                tips: ["强效光污染滤镜", "密集多帧叠加", "强力后期处理"]
+            },
+            6: {
+                iso: "3200-6400",
+                shutter: "5-15秒",
+                aperture: "最大光圈",
+                advice: "高ISO，短曝光时间",
+                tips: ["专攻星轨摄影", "使用星野赤道仪", "视频叠加技术"]
+            },
+            7: {
+                iso: "6400-12800",
+                shutter: "3-10秒",
+                aperture: "最大光圈",
+                advice: "极限ISO，极短曝光",
+                tips: ["专攻月亮和行星摄影", "使用行星相机", "视频叠加技术"]
+            },
+            8: {
+                iso: "12800+",
+                shutter: "1-5秒",
+                aperture: "最大光圈",
+                advice: "极限设置，优先拍摄月亮和行星",
+                tips: ["使用高感光相机", "专攻月球表面", "行星视频叠加"]
+            },
+            9: {
+                iso: "自动",
+                shutter: "<3秒",
+                aperture: "最大光圈",
+                advice: "不适合星空摄影，建议白天拍摄",
+                tips: ["考虑红外摄影", "城市夜景", "创意光绘"]
+            }
+        };
+
+        // 上海地区季节可见星体数据库
+        const shanghaiStarsDatabase = {
+            // 春季 (3-5月) - 晚上9点到次日6点
+            spring: [
+                { name: "轩辕十四", constellation: "狮子座", magnitude: 1.35, type: "恒星", bestViewing: "21:00-23:00", visibility: [1, 2, 3, 4] },
+                { name: "大角星", constellation: "牧夫座", magnitude: -0.05, type: "恒星", bestViewing: "22:00-02:00", visibility: [1, 2, 3, 4, 5] },
+                { name: "角宿一", constellation: "室女座", magnitude: 0.98, type: "双星", bestViewing: "22:00-01:00", visibility: [1, 2, 3, 4] },
+                { name: "五帝座一", constellation: "狮子座", magnitude: 2.14, type: "恒星", bestViewing: "21:00-00:00", visibility: [1, 2, 3] },
+                { name: "北斗七星", constellation: "大熊座", magnitude: 1.8, type: "星群", bestViewing: "整夜可见", visibility: [1, 2, 3, 4, 5, 6, 7] },
+                { name: "后发座星团", constellation: "后发座", magnitude: 5.3, type: "疏散星团", bestViewing: "23:00-03:00", visibility: [1, 2, 3] },
+                { name: "室女座星系团", constellation: "室女座", magnitude: 8.5, type: "星系团", bestViewing: "23:00-02:00", visibility: [1, 2] }
+            ],
+            // 夏季 (6-8月)
+            summer: [
+                { name: "织女星", constellation: "天琴座", magnitude: 0.03, type: "恒星", bestViewing: "21:00-03:00", visibility: [1, 2, 3, 4, 5, 6, 7, 8] },
+                { name: "天津四", constellation: "天鹅座", magnitude: 1.25, type: "恒星", bestViewing: "22:00-04:00", visibility: [1, 2, 3, 4, 5, 6] },
+                { name: "牛郎星", constellation: "天鹰座", magnitude: 0.77, type: "恒星", bestViewing: "21:00-03:00", visibility: [1, 2, 3, 4, 5, 6, 7] },
+                { name: "天鹅座X-1", constellation: "天鹅座", magnitude: 8.9, type: "黑洞系统", bestViewing: "23:00-02:00", visibility: [1, 2] },
+                { name: "夏季大三角", constellation: "天琴/天鹅/天鹰", magnitude: "多星", type: "星群", bestViewing: "整夜可见", visibility: [1, 2, 3, 4, 5, 6, 7, 8] },
+                { name: "天蝎座心宿二", constellation: "天蝎座", magnitude: 0.96, type: "红超巨星", bestViewing: "21:00-23:00", visibility: [1, 2, 3, 4, 5] },
+                { name: "人马座星云", constellation: "人马座", magnitude: 6.0, type: "星云", bestViewing: "22:00-01:00", visibility: [1, 2, 3] },
+                { name: "武仙座球状星团", constellation: "武仙座", magnitude: 5.8, type: "球状星团", bestViewing: "22:00-02:00", visibility: [1, 2, 3] }
+            ],
+            // 秋季 (9-11月)
+            autumn: [
+                { name: "北落师门", constellation: "南鱼座", magnitude: 1.16, type: "恒星", bestViewing: "22:00-04:00", visibility: [1, 2, 3, 4, 5] },
+                { name: "土司空", constellation: "鲸鱼座", magnitude: 2.02, type: "恒星", bestViewing: "23:00-05:00", visibility: [1, 2, 3, 4] },
+                { name: "飞马座四边形", constellation: "飞马座", magnitude: 2.8, type: "星群", bestViewing: "21:00-02:00", visibility: [1, 2, 3, 4, 5, 6] },
+                { name: "仙女座星系", constellation: "仙女座", magnitude: 3.4, type: "星系", bestViewing: "21:00-04:00", visibility: [1, 2, 3, 4, 5] },
+                { name: "英仙座双星团", constellation: "英仙座", magnitude: 4.3, type: "疏散星团", bestViewing: "22:00-03:00", visibility: [1, 2, 3] },
+                { name: "仙后座W形", constellation: "仙后座", magnitude: 2.2, type: "星群", bestViewing: "整夜可见", visibility: [1, 2, 3, 4, 5, 6, 7] },
+                { name: "三角座星系", constellation: "三角座", magnitude: 5.7, type: "星系", bestViewing: "22:00-02:00", visibility: [1, 2, 3] }
+            ],
+            // 冬季 (12-2月)
+            winter: [
+                { name: "天狼星", constellation: "大犬座", magnitude: -1.46, type: "恒星", bestViewing: "21:00-05:00", visibility: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
+                { name: "参宿四", constellation: "猎户座", magnitude: 0.42, type: "红超巨星", bestViewing: "21:00-04:00", visibility: [1, 2, 3, 4, 5, 6, 7, 8] },
+                { name: "参宿七", constellation: "猎户座", magnitude: 0.18, type: "蓝超巨星", bestViewing: "21:00-04:00", visibility: [1, 2, 3, 4, 5, 6, 7, 8] },
+                { name: "南河三", constellation: "小犬座", magnitude: 0.34, type: "恒星", bestViewing: "22:00-05:00", visibility: [1, 2, 3, 4, 5, 6, 7] },
+                { name: "毕宿五", constellation: "金牛座", magnitude: 0.85, type: "红巨星", bestViewing: "21:00-03:00", visibility: [1, 2, 3, 4, 5, 6, 7] },
+                { name: "猎户座大星云", constellation: "猎户座", magnitude: 4.0, type: "星云", bestViewing: "22:00-03:00", visibility: [1, 2, 3, 4, 5] },
+                { name: "昴星团", constellation: "金牛座", magnitude: 1.6, type: "疏散星团", bestViewing: "21:00-04:00", visibility: [1, 2, 3, 4, 5, 6] },
+                { name: "双子座北河二", constellation: "双子座", magnitude: 1.93, type: "双星", bestViewing: "22:00-05:00", visibility: [1, 2, 3, 4, 5] },
+                { name: "御夫座五车二", constellation: "御夫座", magnitude: 0.08, type: "双星", bestViewing: "21:00-05:00", visibility: [1, 2, 3, 4, 5, 6, 7] }
+            ]
+        };
+
+        // 事件监听器
+        imageInput.addEventListener('change', handleImageUpload);
+        analyzeBtn.addEventListener('click', analyzeImage);
+        saveImageBtn.addEventListener('click', saveStarImage);
+        colorBlock.addEventListener('click', copyColorToClipboard);
+
+        // 处理图片上传
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                originalImage = new Image();
+                originalImage.onload = function () {
+                    // 显示预览
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    noPreview.style.display = 'none';
+
+                    // 更新图片信息
+                    imageInfo.querySelector('.stat-value').textContent =
+                        `${file.name} (${originalImage.width}×${originalImage.height})`;
+
+                    // 启用分析按钮
+                    analyzeBtn.disabled = false;
+
+                    // 重置结果
+                    resetResults();
+                };
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 重置结果
+        function resetResults() {
+            analysisResult = null;
+            starCenters = [];
+            starCount = 0;
+            starMarkedImageUrl = null;
+            starMask = null;
+            standardGrayValue = 0;
+            excludedPixelCount = 0;
+            pollutionLevel = 0;
+            pollutionDescription = "";
+            isGradientImage = false;
+
+            resultsText.textContent = '请先上传并分析图片...';
+
+            // 重置统计信息
+            imageTypeStat.querySelector('.stat-value').textContent = '-';
+            avgRgbStat.querySelector('.stat-value').textContent = '-';
+            avgHexStat.querySelector('.stat-value').textContent = '-';
+            gradientStat.querySelector('.stat-value').textContent = '-';
+            yangyangGrayStat.querySelector('.stat-value').textContent = '-';
+            standardGrayStat.querySelector('.stat-value').textContent = '-';
+            pollutionLevelStat.querySelector('.stat-value').textContent = '-';
+
+            // 重置颜色块
+            colorBlock.style.backgroundColor = '#333';
+            colorInfo.querySelector('.stat-value').textContent = '#000000';
+
+            // 重置星星检测结果
+            starCountDisplay.textContent = '检测到的星星数量: -';
+            saveImageBtn.disabled = true;
+            excludedAreaStat.querySelector('.stat-value').textContent = '-';
+            starPointsContainer.style.display = 'none';
+
+            // 隐藏推荐容器和可见星体面板
+            recommendationContainer.style.display = 'none';
+            visibleStarsPanel.style.display = 'none';
+        }
+
+        // 分析图片
+        async function analyzeImage() {
+            if (!originalImage) {
+                alert('请先选择图片');
+                return;
+            }
+
+            // 显示处理中覆盖层
+            processingMessage.textContent = '正在分析图片，请稍候...';
+            processingOverlay.style.display = 'flex';
+
+            try {
+                // 设置画布尺寸
+                imageCanvas.width = originalImage.width;
+                imageCanvas.height = originalImage.height;
+
+                const ctx = imageCanvas.getContext('2d');
+                ctx.drawImage(originalImage, 0, 0);
+
+                // 获取图像数据
+                imageData = ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
+
+                // 执行分析 - 使用async/await以避免阻塞UI
+                analysisResult = await findSuitablePoints(imageData);
+
+                // 检查图片类型
+                isGradientImage = (analysisResult.imageType === "渐变型");
+
+                // 根据图片类型选择不同的处理逻辑
+                if (!isGradientImage) {
+                    // 纯色型图片：执行完整的星星检测和标准灰度值计算
+                    await detectStarsCircular();
+                    await markStars();
+                    await calculateStandardGrayValue();
+                } else {
+                    // 渐变型图片：跳过星星检测，直接使用杨洋的灰度值
+                    starCount = 0;
+                    standardGrayValue = analysisResult.yangyangGray;
+                    excludedPixelCount = 0;
+
+                    // 更新检测参数显示
+                    detectionParams.querySelector('.stat-value').textContent =
+                        "渐变型图片，跳过星星检测";
+                    excludedAreaStat.querySelector('.stat-value').textContent = "渐变型图片，不排除星星区域";
+
+                    // 禁用保存按钮，因为没有标记星星的图片
+                    saveImageBtn.disabled = true;
+                }
+
+                // 计算光污染等级
+                await calculatePollutionLevel();
+
+                // 更新UI显示结果
+                updateResultsDisplay();
+
+                // 计算并显示可见星体
+                await calculateVisibleStars();
+
+                // 如果是纯色型图片且有星星，启用保存按钮
+                if (!isGradientImage && starCount > 0) {
+                    saveImageBtn.disabled = false;
+                }
+
+                // 隐藏处理中覆盖层
+                processingOverlay.style.display = 'none';
+
+            } catch (error) {
+                console.error('分析图片时出错:', error);
+                alert('分析图片时出错: ' + error.message);
+                processingOverlay.style.display = 'none';
+            }
+        }
+
+        // 获取像素颜色
+        function getPixelColor(imageData, x, y) {
+            if (x < 0 || x >= imageData.width || y < 0 || y >= imageData.height) {
+                return null;
+            }
+
+            const index = (y * imageData.width + x) * 4;
+            return [
+                imageData.data[index],
+                imageData.data[index + 1],
+                imageData.data[index + 2]
+            ];
+        }
+
+        // RGB转16进制
+        function rgbToHex(r, g, b) {
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+
+        // RGB转灰度值
+        function rgbToGrayscale(rgb) {
+            return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+        }
+
+        // 计算欧氏距离
+        function calculateEuclideanDistance(rgb1, rgb2) {
+            if (rgb1 === null || rgb2 === null) {
+                return Infinity;
+            }
+            return Math.sqrt(
+                Math.pow(rgb1[0] - rgb2[0], 2) +
+                Math.pow(rgb1[1] - rgb2[1], 2) +
+                Math.pow(rgb1[2] - rgb2[2], 2)
+            );
+        }
+
+        // 计算坐标距离
+        function calculateCoordinateDistance(point1, point2) {
+            const [x1, y1] = point1;
+            const [x2, y2] = point2;
+            return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        }
+
+        // 计算杨洋的灰度值 - 严格按原始算法实现
+        function calculateYangyangGrayscale(imageData) {
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+
+            // 计算所有像素的灰度值
+            const allGrayValues = [];
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const index = (y * width + x) * 4;
+                    const gray = 0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2];
+                    allGrayValues.push(gray);
+                }
+            }
+
+            // 计算灰度值的均值和标准差
+            const sum = allGrayValues.reduce((a, b) => a + b, 0);
+            const meanGray = sum / allGrayValues.length;
+
+            const squaredDiffs = allGrayValues.map(gray => Math.pow(gray - meanGray, 2));
+            const sumSquaredDiffs = squaredDiffs.reduce((a, b) => a + b, 0);
+            const stdGray = Math.sqrt(sumSquaredDiffs / allGrayValues.length);
+
+            // 定义异常亮度点的阈值（超过均值2个标准差）
+            const thresholdHigh = meanGray + 2 * stdGray;
+            const thresholdLow = meanGray - 2 * stdGray;
+
+            // 去除异常亮度点（过高或过低）
+            const filteredGrayValues = allGrayValues.filter(
+                gray => gray <= thresholdHigh && gray >= thresholdLow
+            );
+
+            // 计算过滤后的平均灰度值
+            if (filteredGrayValues.length > 0) {
+                const filteredSum = filteredGrayValues.reduce((a, b) => a + b, 0);
+                return filteredSum / filteredGrayValues.length;
+            } else {
+                return meanGray;  // 如果没有点符合条件，使用原始均值
+            }
+        }
+
+        // 识别图片类型 - 严格按原始算法实现
+        function classifyImageType(imageData, gradientC) {
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+
+            // 计算图像中所有像素的RGB标准差
+            const rValues = [];
+            const gValues = [];
+            const bValues = [];
+
+            // 采样以减少计算量，但保持算法逻辑
+            const sampleRate = Math.max(1, Math.floor(width * height / 10000));
+
+            for (let y = 0; y < height; y += sampleRate) {
+                for (let x = 0; x < width; x += sampleRate) {
+                    const index = (y * width + x) * 4;
+                    rValues.push(data[index]);
+                    gValues.push(data[index + 1]);
+                    bValues.push(data[index + 2]);
+                }
+            }
+
+            // 计算标准差
+            function calculateStd(values) {
+                const mean = values.reduce((a, b) => a + b, 0) / values.length;
+                const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
+                const variance = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+                return Math.sqrt(variance);
+            }
+
+            const rStd = calculateStd(rValues);
+            const gStd = calculateStd(gValues);
+            const bStd = calculateStd(bValues);
+
+            // 计算平均标准差
+            const avgStd = (rStd + gStd + bStd) / 3;
+
+            // 计算图像四个角落和中心点的颜色差异
+            const corners = [
+                getPixelColor(imageData, 0, 0),  // 左上
+                getPixelColor(imageData, width - 1, 0),  // 右上
+                getPixelColor(imageData, 0, height - 1),  // 左下
+                getPixelColor(imageData, width - 1, height - 1)  // 右下
+            ];
+            const center = getPixelColor(imageData, Math.floor(width / 2), Math.floor(height / 2));  // 中心
+
+            // 计算角落与中心点的最大颜色差异
+            let maxDiff = 0;
+            for (const corner of corners) {
+                if (corner && center) {
+                    const diff = calculateEuclideanDistance(corner, center);
+                    if (diff > maxDiff) {
+                        maxDiff = diff;
+                    }
+                }
+            }
+
+            // 判断图片类型 - 严格按原始算法
+            // 如果颜色变化很小，认为是纯色型
+            if (avgStd < 15 && maxDiff < 30) {
+                return "纯色型";
+            }
+            // 如果颜色变化较大，且角落与中心差异明显，认为是渐变型
+            else if (avgStd > 25 && maxDiff > 50) {
+                return "渐变型";
+            }
+            // 其他情况，根据递变量c进一步判断
+            else {
+                // 如果递变量c较大，说明有较强的颜色变化趋势
+                if (gradientC > 0.1) {  // 递变量阈值
+                    return "渐变型";
+                } else {
+                    return "纯色型";
+                }
+            }
+        }
+
+        // 寻找所有符合条件的点P - 严格按原始算法实现
+        async function findSuitablePoints(imageData) {
+            const width = imageData.width;
+            const height = imageData.height;
+
+            // 计算100x100像素块的数量
+            const blocksX = Math.floor(width / 100);
+            const blocksY = Math.floor(height / 100);
+
+            const validPoints = [];
+            const allPointsInfo = [];
+
+            // 更新进度
+            processingMessage.textContent = '正在分析P点...';
+            const totalBlocks = blocksX * blocksY;
+            let processedBlocks = 0;
+
+            // 遍历所有100x100像素块
+            for (let i = 0; i < blocksX; i++) {
+                for (let j = 0; j < blocksY; j++) {
+                    // 计算块的中心点P
+                    const a = i * 100 + 50;
+                    const b = j * 100 + 50;
+
+                    // 确保P点周围20像素不越界
+                    if (a < 20 || a >= width - 20 || b < 20 || b >= height - 20) {
+                        processedBlocks++;
+                        continue;
+                    }
+
+                    // 获取点P的RGB值
+                    const pRgb = getPixelColor(imageData, a, b);
+
+                    // 获取四个方向的像素点
+                    const directions = {
+                        'left': Array.from({ length: 20 }, (_, idx) => [a - (idx + 1), b]),
+                        'right': Array.from({ length: 20 }, (_, idx) => [a + (idx + 1), b]),
+                        'up': Array.from({ length: 20 }, (_, idx) => [a, b - (idx + 1)]),
+                        'down': Array.from({ length: 20 }, (_, idx) => [a, b + (idx + 1)])
+                    };
+
+                    // 计算所有方向的d值和delta值
+                    const allDValues = {};
+                    const allDeltaValues = {};
+                    let deltaCountAbove5 = 0;
+
+                    for (const [direction, coordinates] of Object.entries(directions)) {
+                        // 获取该方向所有点的RGB值
+                        const rgbValues = coordinates.map(([x, y]) => getPixelColor(imageData, x, y));
+
+                        // 计算d值（点P与每个方向上的点之间的欧氏距离）
+                        const dValues = rgbValues.map(rgb =>
+                            rgb ? calculateEuclideanDistance(pRgb, rgb) : Infinity
+                        );
+
+                        allDValues[direction] = dValues;
+
+                        // 计算delta值（相邻d值的绝对差值）
+                        const deltaValues = [];
+                        for (let k = 0; k < dValues.length - 1; k++) {
+                            const delta = Math.abs(dValues[k] - dValues[k + 1]);
+                            deltaValues.push(delta);
+
+                            // 统计大于等于5的delta值数量
+                            if (delta >= 5) {
+                                deltaCountAbove5++;
+                            }
+                        }
+
+                        allDeltaValues[direction] = deltaValues;
+                    }
+
+                    // 判定条件：所有delta值中不超过5个大于等于5
+                    if (deltaCountAbove5 <= 5) {
+                        // 找到符合条件的点
+                        const hexColor = rgbToHex(pRgb[0], pRgb[1], pRgb[2]);
+                        const grayscale = rgbToGrayscale(pRgb);
+
+                        const pointInfo = {
+                            point: [a, b],
+                            rgb: pRgb,
+                            hex: hexColor,
+                            grayscale: grayscale,
+                            dValues: allDValues,
+                            deltaValues: allDeltaValues
+                        };
+
+                        validPoints.push(pointInfo);
+                    }
+
+                    allPointsInfo.push({
+                        point: [a, b],
+                        rgb: pRgb
+                    });
+
+                    processedBlocks++;
+
+                    // 更新进度
+                    if (processedBlocks % 100 === 0) {
+                        processingProgress.textContent = `进度: ${Math.round((processedBlocks / totalBlocks) * 100)}%`;
+                        // 使用setTimeout让UI有机会更新
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                    }
+                }
+            }
+
+            // 计算杨洋的灰度值
+            processingMessage.textContent = '计算杨洋的灰度值...';
+            const yangyangGray = calculateYangyangGrayscale(imageData);
+
+            // 识别图片类型
+            processingMessage.textContent = '识别图片类型...';
+            const imageType = classifyImageType(imageData, 0); // 先传入0，后面再更新
+
+            // 计算统计信息
+            if (validPoints.length > 0) {
+                // 计算平均RGB
+                let sumR = 0, sumG = 0, sumB = 0;
+                for (const p of validPoints) {
+                    sumR += p.rgb[0];
+                    sumG += p.rgb[1];
+                    sumB += p.rgb[2];
+                }
+
+                const avgR = Math.round(sumR / validPoints.length);
+                const avgG = Math.round(sumG / validPoints.length);
+                const avgB = Math.round(sumB / validPoints.length);
+                const avgRgb = [avgR, avgG, avgB];
+
+                // 计算灰度值统计
+                const grayscaleValues = validPoints.map(p => p.grayscale);
+                const avgGrayscale = grayscaleValues.reduce((a, b) => a + b, 0) / grayscaleValues.length;
+                const minGrayscale = Math.min(...grayscaleValues);
+                const maxGrayscale = Math.max(...grayscaleValues);
+
+                // 找到最小和最大灰度值对应的点
+                let minGrayPoint = null;
+                let maxGrayPoint = null;
+                let minGrayValue = Infinity;
+                let maxGrayValue = -Infinity;
+
+                for (const point of validPoints) {
+                    if (point.grayscale < minGrayValue) {
+                        minGrayValue = point.grayscale;
+                        minGrayPoint = point;
+                    }
+                    if (point.grayscale > maxGrayValue) {
+                        maxGrayValue = point.grayscale;
+                        maxGrayPoint = point;
+                    }
+                }
+
+                // 计算递变量c
+                let gradientC = 0;
+                if (minGrayPoint && maxGrayPoint) {
+                    const coordinateDistance = calculateCoordinateDistance(
+                        minGrayPoint.point, maxGrayPoint.point
+                    );
+                    const grayDifference = maxGrayValue - minGrayValue;
+                    gradientC = coordinateDistance > 0 ? grayDifference / coordinateDistance : 0;
+                }
+
+                // 重新识别图片类型，使用计算出的gradientC
+                const finalImageType = classifyImageType(imageData, gradientC);
+
+                return {
+                    validPoints: validPoints,
+                    allPointsInfo: allPointsInfo,
+                    avgRgb: avgRgb,
+                    avgHex: rgbToHex(avgRgb[0], avgRgb[1], avgRgb[2]),
+                    grayscaleStats: {
+                        avg: avgGrayscale,
+                        min: minGrayscale,
+                        max: maxGrayscale
+                    },
+                    gradientC: gradientC,
+                    yangyangGray: yangyangGray,
+                    imageType: finalImageType,
+                    minGrayPoint: minGrayPoint,
+                    maxGrayPoint: maxGrayPoint,
+                    totalPoints: allPointsInfo.length,
+                    validCount: validPoints.length
+                };
+            } else {
+                return {
+                    validPoints: [],
+                    allPointsInfo: [],
+                    yangyangGray: yangyangGray,
+                    imageType: imageType,
+                    totalPoints: allPointsInfo.length,
+                    validCount: 0
+                };
+            }
+        }
+
+        // 从图像中减去背景颜色 - 严格按原始算法实现
+        function subtractBackground(imageData, backgroundRgb) {
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+
+            // 创建新的图像数据
+            const subtractedData = new ImageData(width, height);
+
+            // 减去背景颜色
+            for (let i = 0; i < data.length; i += 4) {
+                // 饱和减法，避免负值
+                const r = Math.max(0, data[i] - backgroundRgb[0]);
+                const g = Math.max(0, data[i + 1] - backgroundRgb[1]);
+                const b = Math.max(0, data[i + 2] - backgroundRgb[2]);
+
+                subtractedData.data[i] = r;
+                subtractedData.data[i + 1] = g;
+                subtractedData.data[i + 2] = b;
+                subtractedData.data[i + 3] = data[i + 3]; // Alpha通道保持不变
+            }
+
+            return subtractedData;
+        }
+
+        // 创建星星区域掩码
+        function createStarMask(width, height, starCenters, searchRadius = 10) {
+            // 创建一个二维数组作为掩码，0表示非星星区域，1表示星星区域
+            const mask = new Array(height).fill().map(() => new Array(width).fill(0));
+            let excludedArea = 0;
+
+            // 对于每个星星，标记其有效覆盖区域
+            for (const star of starCenters) {
+                const [cx, cy] = star.center;
+
+                // 标记星星中心区域（半径2像素）
+                for (let dy = -2; dy <= 2; dy++) {
+                    for (let dx = -2; dx <= 2; dx++) {
+                        const x = cx + dx;
+                        const y = cy + dy;
+                        if (x >= 0 && x < width && y >= 0 && y < height) {
+                            mask[y][x] = 1;
+                        }
+                    }
+                }
+
+                // 标记星星周围的点（星星检测中识别出的点）
+                for (const [px, py] of star.points) {
+                    if (px >= 0 && px < width && py >= 0 && py < height) {
+                        mask[py][px] = 1;
+                    }
+                }
+
+                // 标记搜索半径内的区域（半径10像素的圆形区域）
+                for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+                    for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance <= searchRadius) {
+                            const x = cx + dx;
+                            const y = cy + dy;
+                            if (x >= 0 && x < width && y >= 0 && y < height) {
+                                mask[y][x] = 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 计算被排除的区域面积
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    if (mask[y][x] === 1) {
+                        excludedArea++;
+                    }
+                }
+            }
+
+            return { mask, excludedArea };
+        }
+
+        // 使用圆形分布算法检测星星 - 严格按原始算法实现
+        async function detectStarsCircular() {
+            if (!analysisResult || analysisResult.validCount === 0) {
+                starCount = 0;
+                return;
+            }
+
+            processingMessage.textContent = '正在检测星星...';
+
+            // 获取背景色
+            const backgroundColor = analysisResult.avgRgb;
+
+            // 设置画布尺寸
+            subtractedCanvas.width = imageCanvas.width;
+            subtractedCanvas.height = imageCanvas.height;
+
+            const ctx = subtractedCanvas.getContext('2d');
+            ctx.putImageData(imageData, 0, 0);
+
+            // 创建减去背景后的图像
+            const subtractedImageData = subtractBackground(imageData, backgroundColor);
+            ctx.putImageData(subtractedImageData, 0, 0);
+
+            const width = subtractedImageData.width;
+            const height = subtractedImageData.height;
+            const data = subtractedImageData.data;
+
+            // 严格按原始参数设置
+            const whiteThreshold = 30;  // 从60降低到30，因为减去背景后星星更明显
+            const colorDiffThreshold = 60;  // 从50增加到60，允许更大的颜色差异
+            const backgroundDiffThreshold = 5;  // 从6降低到5
+            const searchRadius = 10;
+            const minCircularPoints = 2;  // 从3降低到2，允许更少的点形成星星
+
+            // 存储已检测的星星中心
+            const detectedStars = [];
+
+            // 存储最终确认的星星
+            const confirmedStars = [];
+
+            // 创建访问标记数组
+            const visited = new Array(height).fill().map(() => new Array(width).fill(false));
+
+            // 定义搜索方向（8连通）
+            const directions = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1], [0, 1],
+                [1, -1], [1, 0], [1, 1]
+            ];
+
+            // 添加亮度权重计算，考虑像素的相对亮度
+            function getBrightnessWeight(rgb) {
+                const grayValue = rgbToGrayscale(rgb);
+                // 亮度越高，权重越大
+                return grayValue / 255.0;
+            }
+
+            // 计算总像素数用于进度显示
+            const totalPixels = width * height;
+            let processedPixels = 0;
+
+            // 遍历每个像素作为初始检测中心
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    if (visited[y][x]) {
+                        processedPixels++;
+                        continue;
+                    }
+
+                    // 获取当前像素颜色
+                    const pixelIndex = (y * width + x) * 4;
+                    const currentColor = [
+                        data[pixelIndex],
+                        data[pixelIndex + 1],
+                        data[pixelIndex + 2]
+                    ];
+
+                    // 计算当前像素的亮度
+                    const currentBrightness = rgbToGrayscale(currentColor);
+
+                    // 修改7: 使用更灵活的白色判断条件
+                    const currentIsBright = (currentBrightness >= whiteThreshold);
+
+                    // 修改8: 使用黑色作为背景色进行比较
+                    const currentBackgroundDiff = calculateEuclideanDistance(currentColor, [0, 0, 0]);
+
+                    // 修改9: 添加亮度权重，提高对较亮像素的灵敏度
+                    const brightnessWeight = getBrightnessWeight(currentColor);
+                    const adjustedBackgroundThreshold = backgroundDiffThreshold * (1 + brightnessWeight);
+
+                    // 如果当前点不是异常点，跳过
+                    if (!currentIsBright || currentBackgroundDiff <= adjustedBackgroundThreshold) {
+                        processedPixels++;
+                        continue;
+                    }
+
+                    // 在当前点周围搜索异常点
+                    let candidateCenter = [x, y];
+
+                    // 搜索半径内的异常点
+                    let foundBetterCenter = false;
+
+                    // 搜索半径内的所有点
+                    for (let dy = -searchRadius; dy <= searchRadius && !foundBetterCenter; dy++) {
+                        for (let dx = -searchRadius; dx <= searchRadius && !foundBetterCenter; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+
+                            const nx = x + dx;
+                            const ny = y + dy;
+
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const neighborIndex = (ny * width + nx) * 4;
+                                const neighborColor = [
+                                    data[neighborIndex],
+                                    data[neighborIndex + 1],
+                                    data[neighborIndex + 2]
+                                ];
+
+                                const neighborBrightness = rgbToGrayscale(neighborColor);
+                                const neighborIsBright = (neighborBrightness >= whiteThreshold);
+
+                                // 使用黑色作为背景色进行比较
+                                const neighborBackgroundDiff = calculateEuclideanDistance(neighborColor, [0, 0, 0]);
+                                const neighborBrightnessWeight = getBrightnessWeight(neighborColor);
+                                const neighborAdjustedThreshold = backgroundDiffThreshold * (1 + neighborBrightnessWeight);
+
+                                if (neighborIsBright && neighborBackgroundDiff > neighborAdjustedThreshold) {
+                                    // 检查这个异常点周围是否有更多异常点
+                                    let neighborStarPoints = 0;
+
+                                    for (let ddy = -searchRadius; ddy <= searchRadius; ddy++) {
+                                        for (let ddx = -searchRadius; ddx <= searchRadius; ddx++) {
+                                            if (ddx === 0 && ddy === 0) continue;
+
+                                            const nnx = nx + ddx;
+                                            const nny = ny + ddy;
+
+                                            if (nnx >= 0 && nnx < width && nny >= 0 && nny < height) {
+                                                const nnIndex = (nny * width + nnx) * 4;
+                                                const nnColor = [
+                                                    data[nnIndex],
+                                                    data[nnIndex + 1],
+                                                    data[nnIndex + 2]
+                                                ];
+
+                                                const nnBrightness = rgbToGrayscale(nnColor);
+                                                const nnIsBright = (nnBrightness >= whiteThreshold);
+
+                                                // 使用黑色作为背景色进行比较
+                                                const nnBackgroundDiff = calculateEuclideanDistance(nnColor, [0, 0, 0]);
+                                                const nnBrightnessWeight = getBrightnessWeight(nnColor);
+                                                const nnAdjustedThreshold = backgroundDiffThreshold * (1 + nnBrightnessWeight);
+
+                                                if (nnIsBright && nnBackgroundDiff > nnAdjustedThreshold) {
+                                                    neighborStarPoints++;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // 修改14: 降低移动中心的条件，提高灵敏度
+                                    if (neighborStarPoints >= 1) {  // 从>0降低到>=1
+                                        candidateCenter = [nx, ny];
+                                        foundBetterCenter = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 检查是否已经检测过相似的星星中心
+                    let isDuplicate = false;
+                    for (const [starX, starY] of detectedStars) {
+                        if (Math.abs(candidateCenter[0] - starX) <= 5 && Math.abs(candidateCenter[1] - starY) <= 5) {
+                            isDuplicate = true;
+                            break;
+                        }
+                    }
+
+                    if (isDuplicate) {
+                        processedPixels++;
+                        continue;
+                    }
+
+                    // 以候选中心检查圆形分布
+                    const [cx, cy] = candidateCenter;
+
+                    // 收集半径内的异常点
+                    const circularPoints = [];
+                    for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+                        for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+
+                            const nx = cx + dx;
+                            const ny = cy + dy;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+
+                            // 只考虑在半径范围内的点
+                            if (distance <= searchRadius && nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const neighborIndex = (ny * width + nx) * 4;
+                                const neighborColor = [
+                                    data[neighborIndex],
+                                    data[neighborIndex + 1],
+                                    data[neighborIndex + 2]
+                                ];
+
+                                const neighborBrightness = rgbToGrayscale(neighborColor);
+                                const neighborIsBright = (neighborBrightness >= whiteThreshold);
+
+                                // 使用黑色作为背景色进行比较
+                                const neighborBackgroundDiff = calculateEuclideanDistance(neighborColor, [0, 0, 0]);
+                                const neighborBrightnessWeight = getBrightnessWeight(neighborColor);
+                                const neighborAdjustedThreshold = backgroundDiffThreshold * (1 + neighborBrightnessWeight);
+
+                                if (neighborIsBright && neighborBackgroundDiff > neighborAdjustedThreshold) {
+                                    circularPoints.push([nx, ny]);
+                                }
+                            }
+                        }
+                    }
+
+                    // 修改17: 降低圆形分布的要求，提高灵敏度
+                    if (circularPoints.length >= minCircularPoints) {
+                        // 计算角度分布
+                        const angles = [];
+                        for (const [px, py] of circularPoints) {
+                            const angle = Math.atan2(py - cy, px - cx);
+                            angles.push(angle);
+                        }
+
+                        // 将角度分组到8个扇区
+                        const sectors = [0, 0, 0, 0, 0, 0, 0, 0];
+                        for (const angle of angles) {
+                            // 将角度从[-π, π]转换到[0, 2π]
+                            let normalizedAngle = angle;
+                            if (normalizedAngle < 0) {
+                                normalizedAngle += 2 * Math.PI;
+                            }
+
+                            // 分配到8个扇区
+                            const sector = Math.floor(normalizedAngle / (Math.PI / 4)) % 8;
+                            sectors[sector]++;
+                        }
+
+                        // 计算有异常点的扇区数量
+                        const occupiedSectors = sectors.filter(count => count > 0).length;
+
+                        // 修改18: 降低扇区要求，检测更不规则的星星
+                        if (occupiedSectors >= 3) {  // 从4降低到3
+                            detectedStars.push(candidateCenter);
+                            confirmedStars.push({
+                                center: candidateCenter,
+                                points: circularPoints,
+                                sectorDistribution: sectors
+                            });
+
+                            // 标记这些点已访问
+                            visited[cy][cx] = true;
+                            for (const [px, py] of circularPoints) {
+                                if (py >= 0 && py < height && px >= 0 && px < width) {
+                                    visited[py][px] = true;
+                                }
+                            }
+                        }
+                    }
+
+                    processedPixels++;
+
+                    // 更新进度
+                    if (processedPixels % 10000 === 0) {
+                        processingProgress.textContent = `星星检测进度: ${Math.round((processedPixels / totalPixels) * 100)}%`;
+                        // 使用setTimeout让UI有机会更新
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                    }
+                }
+            }
+
+            starCenters = confirmedStars;
+            starCount = confirmedStars.length;
+
+            // 更新检测参数显示
+            detectionParams.querySelector('.stat-value').textContent =
+                `亮度阈值: ${whiteThreshold}, 背景差异: ${backgroundDiffThreshold}, 搜索半径: ${searchRadius}`;
+        }
+
+        // 自动标记星星（分析完成后自动执行）
+        async function markStars() {
+            if (!originalImage || starCount === 0) {
+                return;
+            }
+
+            processingMessage.textContent = '正在标记星星...';
+
+            // 设置画布尺寸
+            starCanvas.width = originalImage.width;
+            starCanvas.height = originalImage.height;
+
+            const ctx = starCanvas.getContext('2d');
+
+            // 绘制原始图片
+            ctx.drawImage(originalImage, 0, 0);
+
+            // 标记所有星星区域
+            for (const star of starCenters) {
+                const [centerX, centerY] = star.center;
+
+                // 标记星星中心为红色
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 标记星星周围的点为黄色
+                ctx.fillStyle = '#FFFF00';
+                for (const [x, y] of star.points) {
+                    ctx.fillRect(x, y, 1, 1);
+                }
+
+                // 绘制星星的搜索半径圆
+                ctx.strokeStyle = '#FF0000';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // 将标记后的图片转换为URL以便下载
+            starMarkedImageUrl = starCanvas.toDataURL('image/png');
+        }
+
+        // 计算标准灰度值 - 排除星星区域后的平均灰度值
+        async function calculateStandardGrayValue() {
+            if (!imageData || starCount === 0) {
+                standardGrayValue = analysisResult ? analysisResult.yangyangGray : 0;
+                excludedPixelCount = 0;
+                return;
+            }
+
+            processingMessage.textContent = '计算标准灰度值...';
+
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+            const totalPixels = width * height;
+
+            // 创建星星区域掩码
+            const { mask, excludedArea } = createStarMask(width, height, starCenters, 10);
+            starMask = mask;
+            excludedPixelCount = excludedArea;
+
+            let graySum = 0;
+            let includedPixelCount = 0;
+            let processedPixels = 0;
+
+            // 遍历所有像素，排除星星区域
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    // 检查当前像素是否在星星区域内
+                    if (starMask[y][x] === 0) {
+                        // 不在星星区域内，计入计算
+                        const index = (y * width + x) * 4;
+                        const gray = 0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2];
+                        graySum += gray;
+                        includedPixelCount++;
+                    }
+
+                    processedPixels++;
+
+                    // 更新进度
+                    if (processedPixels % 100000 === 0) {
+                        processingProgress.textContent = `标准灰度值计算进度: ${Math.round((processedPixels / totalPixels) * 100)}%`;
+                        // 使用setTimeout让UI有机会更新
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                    }
+                }
+            }
+
+            // 计算标准灰度值
+            standardGrayValue = includedPixelCount > 0 ? graySum / includedPixelCount : 0;
+
+            // 更新排除区域统计
+            const excludedPercentage = ((excludedPixelCount / totalPixels) * 100).toFixed(2);
+            excludedAreaStat.querySelector('.stat-value').textContent =
+                `排除 ${excludedPixelCount} 像素 (${excludedPercentage}%)`;
+        }
+
+        // 计算光污染等级 - 根据图片类型选择不同的灰度值
+        function calculatePollutionLevel() {
+            if (!analysisResult) return;
+
+            processingMessage.textContent = '评估光污染等级...';
+
+            // 基于标准灰度值计算光污染等级
+            // 灰度值范围: 0-255，数值越高表示光污染越严重
+
+            // 根据图片类型选择使用哪个灰度值
+            const grayValue = isGradientImage ? analysisResult.yangyangGray : standardGrayValue;
+
+            // 计算星星密度（星星数量/图片面积） - 渐变型图片不考虑星星密度
+            const imageArea = imageData.width * imageData.height;
+            const starDensity = isGradientImage ? 0 : starCount / (imageArea / 10000); // 每10000像素的星星数量
+
+            // 修改部分：调整阈值，降低灵敏度，使检测结果更符合实际
+            let calculatedLevel;
+
+            if (grayValue < 10) {
+                calculatedLevel = 1; // 极佳
+                pollutionDescription = "极暗天空，光污染极小，理想天文观测地";
+            } else if (grayValue < 20) {
+                calculatedLevel = 2; // 优秀
+                pollutionDescription = "优秀暗空，轻微光污染，极佳观测条件";
+            } else if (grayValue < 30) {
+                calculatedLevel = 3; // 良好
+                pollutionDescription = "良好暗空，乡村天空，银河清晰可见";
+            } else if (grayValue < 40) {
+                calculatedLevel = 4; // 中等
+                pollutionDescription = "中等乡村天空，轻微光污染，银河可见";
+            } else if (grayValue < 55) { // 调整阈值
+                calculatedLevel = 5; // 一般
+                pollutionDescription = "一般乡村/郊区天空，中等光污染";
+            } else if (grayValue < 70) { // 调整阈值
+                calculatedLevel = 6; // 较差
+                pollutionDescription = "郊区天空，明显光污染，仅最亮天体可见";
+            } else if (grayValue < 85) { // 调整阈值
+                calculatedLevel = 7; // 差
+                pollutionDescription = "城市郊区，严重光污染，观测条件受限";
+            } else if (grayValue < 110) { // 调整阈值
+                calculatedLevel = 8; // 很差
+                pollutionDescription = "城市天空，极严重光污染，仅行星可见";
+            } else {
+                calculatedLevel = 9; // 极差
+                pollutionDescription = "严重光污染城市，不适合天文观测";
+            }
+
+            // 如果不是渐变型图片，根据星星密度微调等级
+            if (!isGradientImage) {
+                if (starDensity < 5 && calculatedLevel < 6) {
+                    calculatedLevel = Math.min(calculatedLevel + 1, 9);
+                } else if (starDensity > 10 && calculatedLevel > 3) {
+                    calculatedLevel = Math.max(calculatedLevel - 1, 1);
+                }
+            }
+
+            pollutionLevel = calculatedLevel;
+
+            // 如果是渐变型图片，更新描述
+            if (isGradientImage) {
+                pollutionDescription += " (基于杨洋的灰度值评估)";
+            }
+        }
+
+        // 计算可见星体 - 新增功能
+        async function calculateVisibleStars() {
+            if (!analysisResult) return;
+
+            processingMessage.textContent = '计算可见星体...';
+
+            // 获取当前日期
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1; // 月份从0开始，需要+1
+            const day = now.getDate();
+
+            // 确定季节
+            let season;
+            if (month >= 3 && month <= 5) {
+                season = "spring";
+            } else if (month >= 6 && month <= 8) {
+                season = "summer";
+            } else if (month >= 9 && month <= 11) {
+                season = "autumn";
+            } else {
+                season = "winter";
+            }
+
+            // 获取当前季节的星体数据
+            const seasonStars = shanghaiStarsDatabase[season] || [];
+
+            // 根据光污染等级筛选可见星体
+            const visibleStars = seasonStars.filter(star => {
+                return star.visibility.includes(pollutionLevel);
+            });
+
+            // 更新观测时间信息
+            const seasonNames = {
+                spring: "春季",
+                summer: "夏季",
+                autumn: "秋季",
+                winter: "冬季"
+            };
+
+            observationTime.textContent = `${year}年${month}月${day}日 ${seasonNames[season]} 21:00-06:00`;
+            visibilityFilter.textContent = `光污染等级 ${pollutionLevel}，仅显示在当前条件下可见的星体`;
+
+            // 显示可见星体面板
+            visibleStarsPanel.style.display = 'block';
+
+            // 清空现有列表
+            visibleStarsList.innerHTML = '';
+
+            // 添加所有星体到列表（包括可见和不可见）
+            if (seasonStars.length > 0) {
+                seasonStars.forEach(star => {
+                    const isVisible = star.visibility.includes(pollutionLevel);
+                    
+                    const starElement = document.createElement('div');
+                    starElement.className = `star-item ${isVisible ? 'visible' : 'invisible'}`;
+
+                    // 创建星体信息
+                    const starName = document.createElement('div');
+                    starName.className = 'star-name';
+                    
+                    // 根据可见性使用不同颜色的点和文本
+                    if (isVisible) {
+                        starName.innerHTML = `${star.name} <span class="star-visible-marker visible">● 可见</span>`;
+                    } else {
+                        starName.innerHTML = `${star.name} <span class="star-visible-marker invisible">● 不可见</span>`;
+                    }
+
+                    const starDetails = document.createElement('div');
+                    starDetails.className = 'star-details';
+                    starDetails.innerHTML = `
+                        <span class="star-constellation">${star.constellation}</span>
+                        <span class="star-magnitude">视星等: ${star.magnitude}</span>
+                        <span> | 类型: ${star.type}</span>
+                        <span> | 最佳观测: ${star.bestViewing}</span>
+                    `;
+
+                    starElement.appendChild(starName);
+                    starElement.appendChild(starDetails);
+                    visibleStarsList.appendChild(starElement);
+                });
+            } else {
+                // 如果没有星体数据
+                const noStarsElement = document.createElement('div');
+                noStarsElement.className = 'star-item';
+                noStarsElement.innerHTML = `
+                    <div class="star-name">当前季节无星体数据</div>
+                    <div class="star-details">请检查数据库配置</div>
+                `;
+                visibleStarsList.appendChild(noStarsElement);
+            }
+
+            // 添加季节星体统计信息
+            const allStarsElement = document.createElement('div');
+            allStarsElement.className = 'star-item';
+            allStarsElement.innerHTML = `
+                <div class="star-name">${seasonNames[season]}星体统计</div>
+                <div class="star-details">本季节共 ${seasonStars.length} 个主要星体，其中 ${visibleStars.length} 个在当前光污染条件下可见，${seasonStars.length - visibleStars.length} 个不可见</div>
+            `;
+            visibleStarsList.appendChild(allStarsElement);
+        }
+
+        // 获取可见星座信息
+        function getConstellationInfo(level) {
+            if (!level || level < 1 || level > 9) {
+                return "无法确定可见星座";
+            }
+
+            // 将1-9级映射到数据库中的等级（1-9级）
+            const data = constellationDatabase[level];
+            if (!data) return "数据缺失";
+
+            let result = `肉眼可见: ${data.nakedEye.slice(0, 5).join(", ")}`;
+            if (data.nakedEye.length > 5) result += ` 等${data.nakedEye.length}个星座`;
+
+            result += `\n望远镜可见: ${data.telescope.slice(0, 3).join(", ")}`;
+            if (data.telescope.length > 3) result += ` 等${data.telescope.length}类天体`;
+
+            result += `\n${data.description}`;
+
+            return result;
+        }
+
+        // 获取相机参数建议
+        function getCameraAdvice(level) {
+            if (!level || level < 1 || level > 9) {
+                return "无法提供相机参数建议";
+            }
+
+            // 将1-9级映射到数据库中的等级（1-9级）
+            const data = cameraAdviceDatabase[level];
+            if (!data) return "数据缺失";
+
+            let result = `ISO: ${data.iso}\n`;
+            result += `快门速度: ${data.shutter}\n`;
+            result += `光圈: ${data.aperture}\n`;
+            result += `建议: ${data.advice}\n`;
+            result += `技巧: ${data.tips.join(", ")}`;
+
+            return result;
+        }
+
+        // 保存标记图片
+        function saveStarImage() {
+            if (!originalImage || starCount === 0 || !starMarkedImageUrl) {
+                alert('没有可保存的图片');
+                return;
+            }
+
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.href = starMarkedImageUrl;
+            link.download = `star-marked-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 更新结果显示
+        function updateResultsDisplay() {
+            if (!analysisResult) return;
+
+            // 显示推荐容器
+            recommendationContainer.style.display = 'block';
+
+            // 更新结果文本
+            let resultText = `找到 ${analysisResult.validCount} 个有效点 (共 ${analysisResult.totalPoints} 个点)\n\n`;
+            resultText += `图片类型: ${analysisResult.imageType}\n`;
+
+            if (isGradientImage) {
+                resultText += `检测到渐变型图片，跳过星星检测，使用杨洋的灰度值进行光污染评估\n\n`;
+            }
+
+            // 限制显示的点数，避免界面卡顿
+            const maxPointsToShow = Math.min(10, analysisResult.validCount);
+            for (let i = 0; i < maxPointsToShow; i++) {
+                const point = analysisResult.validPoints[i];
+                resultText += `点 ${i + 1}:\n`;
+                resultText += `  坐标: (${point.point[0]}, ${point.point[1]})\n`;
+                resultText += `  RGB值: (${point.rgb[0]}, ${point.rgb[1]}, ${point.rgb[2]})\n`;
+                resultText += `  16进制: ${point.hex}\n`;
+                resultText += `  灰度值: ${point.grayscale.toFixed(2)}\n\n`;
+            }
+
+            if (analysisResult.validCount > maxPointsToShow) {
+                resultText += `... 还有 ${analysisResult.validCount - maxPointsToShow} 个点未显示\n\n`;
+            }
+
+            // 添加星星检测结果
+            if (!isGradientImage) {
+                resultText += `\n星星检测结果 (减去背景后检测):\n`;
+                resultText += `检测到的星星数量: ${starCount}\n`;
+                resultText += `使用的背景色: (${analysisResult.avgRgb[0]}, ${analysisResult.avgRgb[1]}, ${analysisResult.avgRgb[2]})\n`;
+                resultText += `亮度判断阈值: 灰度值 ≥ 30\n`;
+                resultText += `背景差异阈值: 5 (自适应)\n`;
+                resultText += `搜索半径: 10 像素\n`;
+                resultText += `最小圆形点数: 2\n`;
+                resultText += `最小扇区数: 3\n`;
+
+                // 添加标准灰度值计算结果
+                const totalPixels = imageData.width * imageData.height;
+                const excludedPercentage = ((excludedPixelCount / totalPixels) * 100).toFixed(2);
+                resultText += `\n标准灰度值计算结果:\n`;
+                resultText += `排除星星区域像素数: ${excludedPixelCount} / ${totalPixels} (${excludedPercentage}%)\n`;
+                resultText += `标准灰度值: ${standardGrayValue.toFixed(2)}\n`;
+            } else {
+                resultText += `\n渐变型图片分析结果:\n`;
+                resultText += `跳过星星检测，直接使用杨洋的灰度值进行评估\n`;
+            }
+
+            resultText += `杨洋的灰度值: ${analysisResult.yangyangGray.toFixed(2)}\n`;
+            resultText += `差值: ${Math.abs(standardGrayValue - analysisResult.yangyangGray).toFixed(2)}\n`;
+
+            // 添加光污染等级评估
+            const levelNames = ["极佳", "优秀", "良好", "中等", "一般", "较差", "差", "很差", "极差"];
+            const levelColors = ["level-1", "level-2", "level-3", "level-4", "level-5", "level-6", "level-7", "level-8", "level-9"];
+            resultText += `\n光污染等级评估:\n`;
+            resultText += `等级: ${pollutionLevel} (${levelNames[pollutionLevel - 1]})\n`;
+            resultText += `描述: ${pollutionDescription}\n`;
+
+            // 如果不是渐变型图片，显示前10颗星星的坐标
+            if (!isGradientImage && starCount > 0) {
+                resultText += `\n前10颗星星的坐标:\n`;
+                for (let i = 0; i < Math.min(10, starCount); i++) {
+                    const star = starCenters[i];
+                    resultText += `星星 ${i + 1}: 中心坐标 (${star.center[0]}, ${star.center[1]}), 周围点数: ${star.points.length}\n`;
+                }
+
+                // 添加保存说明
+                resultText += `\n星星标记已完成，点击"保存标记图片"按钮下载标记后的图片。`;
+            }
+
+            resultsText.textContent = resultText;
+
+            // 更新统计信息
+            imageTypeStat.querySelector('.stat-value').textContent = analysisResult.imageType;
+            avgRgbStat.querySelector('.stat-value').textContent =
+                `(${analysisResult.avgRgb[0]}, ${analysisResult.avgRgb[1]}, ${analysisResult.avgRgb[2]})`;
+            avgHexStat.querySelector('.stat-value').textContent = analysisResult.avgHex;
+            gradientStat.querySelector('.stat-value').textContent = analysisResult.gradientC.toFixed(6) + ' /px';
+            yangyangGrayStat.querySelector('.stat-value').textContent = analysisResult.yangyangGray.toFixed(2);
+            standardGrayStat.querySelector('.stat-value').textContent = standardGrayValue.toFixed(2);
+            pollutionLevelStat.querySelector('.stat-value').textContent =
+                `${pollutionLevel} (${levelNames[pollutionLevel - 1]})`;
+
+            // 更新颜色块
+            if (analysisResult.validCount > 0) {
+                colorBlock.style.backgroundColor = analysisResult.avgHex;
+                colorInfo.querySelector('.stat-value').textContent = analysisResult.avgHex;
+            }
+
+            // 更新星星计数
+            if (!isGradientImage) {
+                starCountDisplay.textContent = `检测到的星星数量: ${starCount}`;
+            } else {
+                starCountDisplay.textContent = `渐变型图片，跳过星星检测`;
+            }
+
+            // 显示星星坐标列表
+            if (!isGradientImage && starCount > 0) {
+                starPointsContainer.style.display = 'block';
+                starPointsList.innerHTML = '';
+
+                const maxStarsToShow = Math.min(10, starCount);
+                for (let i = 0; i < maxStarsToShow; i++) {
+                    const star = starCenters[i];
+                    const starItem = document.createElement('div');
+                    starItem.textContent = `星星 ${i + 1}: 中心坐标 (${star.center[0]}, ${star.center[1]}), 周围点数: ${star.points.length}`;
+                    starPointsList.appendChild(starItem);
+                }
+            } else {
+                starPointsContainer.style.display = 'none';
+            }
+
+            // 更新推荐信息
+            pollutionLevelDisplay.textContent = `等级 ${pollutionLevel}: ${levelNames[pollutionLevel - 1]}`;
+            pollutionLevelDisplay.className = `pollution-level ${levelColors[pollutionLevel - 1]}`;
+            pollutionDescriptionDisplay.textContent = pollutionDescription;
+            constellationInfo.textContent = getConstellationInfo(pollutionLevel);
+            cameraAdvice.textContent = getCameraAdvice(pollutionLevel);
+        }
+
+        // 复制颜色到剪贴板
+        function copyColorToClipboard() {
+            if (!analysisResult || analysisResult.validCount === 0) return;
+
+            const colorHex = analysisResult.avgHex;
+            navigator.clipboard.writeText(colorHex).then(() => {
+                alert(`已复制颜色代码: ${colorHex}`);
+            }).catch(err => {
+                console.error('复制失败:', err);
+            });
+        }
+
+        // 初始化
+        function init() {
+            console.log('星空光污染检测与分析工具已初始化');
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>

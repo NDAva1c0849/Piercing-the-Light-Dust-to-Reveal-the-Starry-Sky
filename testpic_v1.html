@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空背景色分析与星星检测工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #1a1a2e;
+            color: #e6e6e6;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #16213e;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #0f3460;
+        }
+        
+        h1 {
+            font-size: 28px;
+            color: #4cc9f0;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #aaa;
+            font-size: 16px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .right-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .control-panel {
+            background-color: #0f3460;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .file-upload {
+            margin-bottom: 20px;
+        }
+        
+        .file-input {
+            width: 100%;
+            padding: 10px;
+            background-color: #1a1a2e;
+            border: 2px dashed #4cc9f0;
+            border-radius: 5px;
+            color: #e6e6e6;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .preview-container {
+            width: 100%;
+            height: 200px;
+            background-color: #1a1a2e;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3d8b40;
+        }
+        
+        .btn-secondary {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #0b7dda;
+        }
+        
+        .btn-tertiary {
+            background-color: #FF9800;
+            color: white;
+        }
+        
+        .btn-tertiary:hover {
+            background-color: #e68a00;
+        }
+        
+        .btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        
+        .results-panel {
+            background-color: #0f3460;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            color: #4cc9f0;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        
+        .results-text {
+            background-color: #1a1a2e;
+            border-radius: 5px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            background-color: #1a1a2e;
+            padding: 12px;
+            border-radius: 5px;
+            border-left: 4px solid #4cc9f0;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .color-display {
+            background-color: #0f3460;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .color-block {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 15px;
+            border-radius: 10px;
+            border: 3px solid #1a1a2e;
+            background-color: #333;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .color-block:hover {
+            transform: scale(1.05);
+        }
+        
+        .color-info {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        
+        .star-results {
+            background-color: #0f3460;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .star-count {
+            font-size: 20px;
+            color: #ff4757;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .processing-content {
+            background-color: #16213e;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #0f3460;
+            border-top: 5px solid #4cc9f0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .star-points-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #1a1a2e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        .note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>星空背景色分析与星星检测工具</h1>
+            <p class="subtitle">上传星空图片，分析背景颜色并检测星星</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="control-panel">
+                    <h2 class="section-title">图片上传</h2>
+                    <div class="file-upload">
+                        <input type="file" id="imageInput" class="file-input" accept="image/*">
+                    </div>
+                    
+                    <div class="preview-container">
+                        <img id="imagePreview" class="preview-image" src="" alt="图片预览">
+                        <div id="noPreview">暂无图片</div>
+                    </div>
+                    
+                    <div class="buttons">
+                        <button id="analyzeBtn" class="btn btn-primary" disabled>分析图片</button>
+                        <button id="markStarsBtn" class="btn btn-tertiary" disabled>标记星星</button>
+                    </div>
+                    
+                    <div id="imageInfo" class="stat-item">
+                        <div class="stat-label">图片信息</div>
+                        <div class="stat-value">未选择图片</div>
+                    </div>
+                </div>
+                
+                <div class="results-panel">
+                    <h2 class="section-title">分析结果</h2>
+                    <div id="resultsText" class="results-text">请先上传并分析图片...</div>
+                    
+                    <h3 class="section-title">统计结果</h3>
+                    <div class="stats-grid">
+                        <div id="imageTypeStat" class="stat-item">
+                            <div class="stat-label">图片类型</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="avgRgbStat" class="stat-item">
+                            <div class="stat-label">平均RGB值</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="avgHexStat" class="stat-item">
+                            <div class="stat-label">平均16进制</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="gradientStat" class="stat-item">
+                            <div class="stat-label">递变量c</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="yangyangGrayStat" class="stat-item">
+                            <div class="stat-label">杨洋的灰度值</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                        <div id="grayStatsStat" class="stat-item">
+                            <div class="stat-label">灰度值统计</div>
+                            <div class="stat-value">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="color-display">
+                    <h2 class="section-title">平均颜色色块</h2>
+                    <div id="colorBlock" class="color-block"></div>
+                    <p class="color-info">点击色块可复制颜色代码</p>
+                    <div id="colorInfo" class="stat-item">
+                        <div class="stat-label">当前颜色</div>
+                        <div class="stat-value">#000000</div>
+                    </div>
+                </div>
+                
+                <div class="star-results">
+                    <h2 class="section-title">星星检测结果</h2>
+                    <div id="starCount" class="star-count">检测到的星星数量: -</div>
+                    
+                    <div class="buttons">
+                        <button id="saveImageBtn" class="btn btn-secondary" disabled>保存标记图片</button>
+                    </div>
+                    
+                    <div id="detectionParams" class="stat-item">
+                        <div class="stat-label">检测参数</div>
+                        <div class="stat-value">亮度阈值: 30, 背景差异: 5</div>
+                    </div>
+                    
+                    <div id="starPointsContainer" style="display: none;">
+                        <div class="stat-label">星星坐标 (前10个)</div>
+                        <div id="starPointsList" class="star-points-list"></div>
+                    </div>
+                </div>
+                
+                <div class="note">
+                    <p>注: 此网页版实现了原Python工具的核心功能，包括颜色分析、星星检测和标记。部分高级功能如详细的P点分析在网页版中已简化。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="processingOverlay" class="processing-overlay">
+        <div class="processing-content">
+            <div class="spinner"></div>
+            <h3>处理中...</h3>
+            <p id="processingMessage">正在分析图片，请稍候</p>
+        </div>
+    </div>
+    
+    <canvas id="imageCanvas" style="display: none;"></canvas>
+    <canvas id="starCanvas" style="display: none;"></canvas>
+    
+    <script>
+        // 全局变量
+        let originalImage = null;
+        let imageData = null;
+        let analysisResult = null;
+        let starCenters = [];
+        let starCount = 0;
+        
+        // DOM元素
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const noPreview = document.getElementById('noPreview');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const markStarsBtn = document.getElementById('markStarsBtn');
+        const saveImageBtn = document.getElementById('saveImageBtn');
+        const imageInfo = document.getElementById('imageInfo');
+        const resultsText = document.getElementById('resultsText');
+        const imageTypeStat = document.getElementById('imageTypeStat');
+        const avgRgbStat = document.getElementById('avgRgbStat');
+        const avgHexStat = document.getElementById('avgHexStat');
+        const gradientStat = document.getElementById('gradientStat');
+        const yangyangGrayStat = document.getElementById('yangyangGrayStat');
+        const grayStatsStat = document.getElementById('grayStatsStat');
+        const colorBlock = document.getElementById('colorBlock');
+        const colorInfo = document.getElementById('colorInfo');
+        const starCountDisplay = document.getElementById('starCount');
+        const detectionParams = document.getElementById('detectionParams');
+        const starPointsContainer = document.getElementById('starPointsContainer');
+        const starPointsList = document.getElementById('starPointsList');
+        const processingOverlay = document.getElementById('processingOverlay');
+        const processingMessage = document.getElementById('processingMessage');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const starCanvas = document.getElementById('starCanvas');
+        
+        // 事件监听器
+        imageInput.addEventListener('change', handleImageUpload);
+        analyzeBtn.addEventListener('click', analyzeImage);
+        markStarsBtn.addEventListener('click', markStars);
+        saveImageBtn.addEventListener('click', saveStarImage);
+        colorBlock.addEventListener('click', copyColorToClipboard);
+        
+        // 处理图片上传
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    // 显示预览
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    noPreview.style.display = 'none';
+                    
+                    // 更新图片信息
+                    imageInfo.querySelector('.stat-value').textContent = 
+                        `${file.name} (${originalImage.width}×${originalImage.height})`;
+                    
+                    // 启用分析按钮
+                    analyzeBtn.disabled = false;
+                    markStarsBtn.disabled = false;
+                    
+                    // 重置结果
+                    resetResults();
+                };
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 重置结果
+        function resetResults() {
+            analysisResult = null;
+            starCenters = [];
+            starCount = 0;
+            
+            resultsText.textContent = '请先上传并分析图片...';
+            
+            // 重置统计信息
+            imageTypeStat.querySelector('.stat-value').textContent = '-';
+            avgRgbStat.querySelector('.stat-value').textContent = '-';
+            avgHexStat.querySelector('.stat-value').textContent = '-';
+            gradientStat.querySelector('.stat-value').textContent = '-';
+            yangyangGrayStat.querySelector('.stat-value').textContent = '-';
+            grayStatsStat.querySelector('.stat-value').textContent = '-';
+            
+            // 重置颜色块
+            colorBlock.style.backgroundColor = '#333';
+            colorInfo.querySelector('.stat-value').textContent = '#000000';
+            
+            // 重置星星检测结果
+            starCountDisplay.textContent = '检测到的星星数量: -';
+            saveImageBtn.disabled = true;
+            starPointsContainer.style.display = 'none';
+        }
+        
+        // 分析图片
+        function analyzeImage() {
+            if (!originalImage) {
+                alert('请先选择图片');
+                return;
+            }
+            
+            // 显示处理中覆盖层
+            processingMessage.textContent = '正在分析图片，请稍候...';
+            processingOverlay.style.display = 'flex';
+            
+            // 使用setTimeout让UI有机会更新
+            setTimeout(() => {
+                try {
+                    // 设置画布尺寸
+                    imageCanvas.width = originalImage.width;
+                    imageCanvas.height = originalImage.height;
+                    
+                    const ctx = imageCanvas.getContext('2d');
+                    ctx.drawImage(originalImage, 0, 0);
+                    
+                    // 获取图像数据
+                    imageData = ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
+                    
+                    // 执行分析
+                    analysisResult = findSuitablePoints(imageData);
+                    
+                    // 执行星星检测
+                    detectStars();
+                    
+                    // 更新UI显示结果
+                    updateResultsDisplay();
+                    
+                    // 隐藏处理中覆盖层
+                    processingOverlay.style.display = 'none';
+                    
+                } catch (error) {
+                    console.error('分析图片时出错:', error);
+                    alert('分析图片时出错: ' + error.message);
+                    processingOverlay.style.display = 'none';
+                }
+            }, 100);
+        }
+        
+        // 寻找合适的点P (简化版)
+        function findSuitablePoints(imageData) {
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+            
+            // 计算100x100像素块的数量
+            const blocksX = Math.floor(width / 100);
+            const blocksY = Math.floor(height / 100);
+            
+            const validPoints = [];
+            const allPointsInfo = [];
+            
+            // 计算杨洋的灰度值 (简化版)
+            const yangyangGray = calculateYangyangGrayscale(imageData);
+            
+            // 遍历所有100x100像素块
+            for (let i = 0; i < blocksX; i++) {
+                for (let j = 0; j < blocksY; j++) {
+                    // 计算块的中心点P
+                    const a = i * 100 + 50;
+                    const b = j * 100 + 50;
+                    
+                    // 确保P点周围20像素不越界
+                    if (a < 20 || a >= width - 20 || b < 20 || b >= height - 20) {
+                        continue;
+                    }
+                    
+                    // 获取点P的RGB值
+                    const pIndex = (b * width + a) * 4;
+                    const pRgb = [
+                        data[pIndex],
+                        data[pIndex + 1],
+                        data[pIndex + 2]
+                    ];
+                    
+                    // 简化的判定条件 - 只检查四个方向
+                    let deltaCountAbove5 = 0;
+                    
+                    // 检查四个方向
+                    const directions = [
+                        { dx: -1, dy: 0, name: 'left' },  // 左
+                        { dx: 1, dy: 0, name: 'right' },   // 右
+                        { dx: 0, dy: -1, name: 'up' },     // 上
+                        { dx: 0, dy: 1, name: 'down' }     // 下
+                    ];
+                    
+                    for (const dir of directions) {
+                        const dValues = [];
+                        
+                        // 获取该方向20个像素的RGB值
+                        for (let k = 1; k <= 20; k++) {
+                            const nx = a + dir.dx * k;
+                            const ny = b + dir.dy * k;
+                            
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const nIndex = (ny * width + nx) * 4;
+                                const nRgb = [
+                                    data[nIndex],
+                                    data[nIndex + 1],
+                                    data[nIndex + 2]
+                                ];
+                                
+                                // 计算欧氏距离
+                                const d = Math.sqrt(
+                                    Math.pow(pRgb[0] - nRgb[0], 2) +
+                                    Math.pow(pRgb[1] - nRgb[1], 2) +
+                                    Math.pow(pRgb[2] - nRgb[2], 2)
+                                );
+                                dValues.push(d);
+                            } else {
+                                dValues.push(Infinity);
+                            }
+                        }
+                        
+                        // 计算delta值
+                        for (let k = 0; k < dValues.length - 1; k++) {
+                            const delta = Math.abs(dValues[k] - dValues[k + 1]);
+                            if (delta >= 5) {
+                                deltaCountAbove5++;
+                            }
+                        }
+                    }
+                    
+                    // 判定条件：所有delta值中不超过5个大于等于5
+                    if (deltaCountAbove5 <= 5) {
+                        // 计算灰度值
+                        const grayscale = 0.299 * pRgb[0] + 0.587 * pRgb[1] + 0.114 * pRgb[2];
+                        const hexColor = rgbToHex(pRgb[0], pRgb[1], pRgb[2]);
+                        
+                        validPoints.push({
+                            point: [a, b],
+                            rgb: pRgb,
+                            hex: hexColor,
+                            grayscale: grayscale
+                        });
+                    }
+                    
+                    allPointsInfo.push({
+                        point: [a, b],
+                        rgb: pRgb
+                    });
+                }
+            }
+            
+            // 计算统计信息
+            let avgRgb = [0, 0, 0];
+            let grayscaleValues = [];
+            
+            if (validPoints.length > 0) {
+                // 计算平均RGB
+                let sumR = 0, sumG = 0, sumB = 0;
+                for (const point of validPoints) {
+                    sumR += point.rgb[0];
+                    sumG += point.rgb[1];
+                    sumB += point.rgb[2];
+                    grayscaleValues.push(point.grayscale);
+                }
+                
+                avgRgb = [
+                    Math.round(sumR / validPoints.length),
+                    Math.round(sumG / validPoints.length),
+                    Math.round(sumB / validPoints.length)
+                ];
+            }
+            
+            // 计算灰度统计
+            let grayscaleStats = { avg: 0, min: 0, max: 0 };
+            if (grayscaleValues.length > 0) {
+                let sumGray = 0;
+                let minGray = Infinity;
+                let maxGray = -Infinity;
+                
+                for (const gray of grayscaleValues) {
+                    sumGray += gray;
+                    if (gray < minGray) minGray = gray;
+                    if (gray > maxGray) maxGray = gray;
+                }
+                
+                grayscaleStats = {
+                    avg: sumGray / grayscaleValues.length,
+                    min: minGray,
+                    max: maxGray
+                };
+            }
+            
+            // 计算递变量c (简化版)
+            let gradientC = 0;
+            if (validPoints.length >= 2) {
+                // 找到最小和最大灰度值的点
+                let minGrayPoint = validPoints[0];
+                let maxGrayPoint = validPoints[0];
+                
+                for (const point of validPoints) {
+                    if (point.grayscale < minGrayPoint.grayscale) minGrayPoint = point;
+                    if (point.grayscale > maxGrayPoint.grayscale) maxGrayPoint = point;
+                }
+                
+                // 计算坐标距离
+                const dx = maxGrayPoint.point[0] - minGrayPoint.point[0];
+                const dy = maxGrayPoint.point[1] - minGrayPoint.point[1];
+                const coordinateDistance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 计算灰度差异
+                const grayDifference = maxGrayPoint.grayscale - minGrayPoint.grayscale;
+                
+                // 计算递变量c
+                gradientC = coordinateDistance > 0 ? grayDifference / coordinateDistance : 0;
+            }
+            
+            // 识别图片类型
+            const imageType = classifyImageType(imageData, gradientC);
+            
+            return {
+                validPoints: validPoints,
+                allPointsInfo: allPointsInfo,
+                avgRgb: avgRgb,
+                avgHex: rgbToHex(avgRgb[0], avgRgb[1], avgRgb[2]),
+                grayscaleStats: grayscaleStats,
+                gradientC: gradientC,
+                yangyangGray: yangyangGray,
+                imageType: imageType,
+                totalPoints: allPointsInfo.length,
+                validCount: validPoints.length
+            };
+        }
+        
+        // 计算杨洋的灰度值 (简化版)
+        function calculateYangyangGrayscale(imageData) {
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+            
+            let sumGray = 0;
+            let grayValues = [];
+            
+            // 计算所有像素的灰度值
+            for (let y = 0; y < height; y += 10) { // 采样以减少计算量
+                for (let x = 0; x < width; x += 10) {
+                    const index = (y * width + x) * 4;
+                    const gray = 0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2];
+                    sumGray += gray;
+                    grayValues.push(gray);
+                }
+            }
+            
+            const meanGray = sumGray / grayValues.length;
+            
+            // 计算标准差 (简化版)
+            let sumSquaredDiff = 0;
+            for (const gray of grayValues) {
+                sumSquaredDiff += Math.pow(gray - meanGray, 2);
+            }
+            const stdGray = Math.sqrt(sumSquaredDiff / grayValues.length);
+            
+            // 过滤异常亮度点
+            const thresholdHigh = meanGray + 2 * stdGray;
+            const thresholdLow = meanGray - 2 * stdGray;
+            
+            let filteredSum = 0;
+            let filteredCount = 0;
+            
+            for (const gray of grayValues) {
+                if (gray <= thresholdHigh && gray >= thresholdLow) {
+                    filteredSum += gray;
+                    filteredCount++;
+                }
+            }
+            
+            return filteredCount > 0 ? filteredSum / filteredCount : meanGray;
+        }
+        
+        // 识别图片类型
+        function classifyImageType(imageData, gradientC) {
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+            
+            // 采样计算颜色变化
+            let sumR = 0, sumG = 0, sumB = 0;
+            let sumRSq = 0, sumGSq = 0, sumBSq = 0;
+            let sampleCount = 0;
+            
+            // 随机采样
+            for (let i = 0; i < 1000; i++) {
+                const x = Math.floor(Math.random() * width);
+                const y = Math.floor(Math.random() * height);
+                const index = (y * width + x) * 4;
+                
+                sumR += data[index];
+                sumG += data[index + 1];
+                sumB += data[index + 2];
+                
+                sumRSq += data[index] * data[index];
+                sumGSq += data[index + 1] * data[index + 1];
+                sumBSq += data[index + 2] * data[index + 2];
+                
+                sampleCount++;
+            }
+            
+            // 计算标准差
+            const meanR = sumR / sampleCount;
+            const meanG = sumG / sampleCount;
+            const meanB = sumB / sampleCount;
+            
+            const stdR = Math.sqrt(sumRSq / sampleCount - meanR * meanR);
+            const stdG = Math.sqrt(sumGSq / sampleCount - meanG * meanG);
+            const stdB = Math.sqrt(sumBSq / sampleCount - meanB * meanB);
+            
+            const avgStd = (stdR + stdG + stdB) / 3;
+            
+            // 根据标准差和递变量c判断
+            if (avgStd < 15) {
+                return "纯色型";
+            } else if (avgStd > 25 || gradientC > 0.1) {
+                return "渐变型";
+            } else {
+                return avgStd > 20 ? "渐变型" : "纯色型";
+            }
+        }
+        
+        // 检测星星
+        function detectStars() {
+            if (!analysisResult || analysisResult.validCount === 0) {
+                starCount = 0;
+                return;
+            }
+            
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+            
+            // 获取背景色
+            const backgroundColor = analysisResult.avgRgb;
+            
+            // 检测参数
+            const whiteThreshold = 30;
+            const backgroundDiffThreshold = 5;
+            const searchRadius = 10;
+            const minCircularPoints = 2;
+            
+            const detectedStars = [];
+            const visited = new Array(width * height).fill(false);
+            
+            // 遍历像素
+            for (let y = 0; y < height; y += 2) { // 跳步以加速
+                for (let x = 0; x < width; x += 2) {
+                    const index = y * width + x;
+                    if (visited[index]) continue;
+                    
+                    // 获取当前像素颜色
+                    const pixelIndex = (y * width + x) * 4;
+                    const currentColor = [
+                        data[pixelIndex],
+                        data[pixelIndex + 1],
+                        data[pixelIndex + 2]
+                    ];
+                    
+                    // 计算灰度值和背景差异
+                    const currentBrightness = 0.299 * currentColor[0] + 0.587 * currentColor[1] + 0.114 * currentColor[2];
+                    const currentBackgroundDiff = euclideanDistance(currentColor, backgroundColor);
+                    
+                    // 检查是否为异常点
+                    if (currentBrightness >= whiteThreshold && currentBackgroundDiff > backgroundDiffThreshold) {
+                        // 检查周围像素
+                        let candidateCenter = [x, y];
+                        let foundBetterCenter = false;
+                        
+                        // 在搜索半径内寻找更好的中心
+                        for (let dy = -searchRadius; dy <= searchRadius && !foundBetterCenter; dy++) {
+                            for (let dx = -searchRadius; dx <= searchRadius && !foundBetterCenter; dx++) {
+                                if (dx === 0 && dy === 0) continue;
+                                
+                                const nx = x + dx;
+                                const ny = y + dy;
+                                
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const neighborIndex = (ny * width + nx) * 4;
+                                    const neighborColor = [
+                                        data[neighborIndex],
+                                        data[neighborIndex + 1],
+                                        data[neighborIndex + 2]
+                                    ];
+                                    
+                                    const neighborBrightness = 0.299 * neighborColor[0] + 0.587 * neighborColor[1] + 0.114 * neighborColor[2];
+                                    const neighborBackgroundDiff = euclideanDistance(neighborColor, backgroundColor);
+                                    
+                                    if (neighborBrightness >= whiteThreshold && neighborBackgroundDiff > backgroundDiffThreshold) {
+                                        // 检查这个点周围是否有更多异常点
+                                        let neighborStarPoints = 0;
+                                        
+                                        for (let ddy = -searchRadius; ddy <= searchRadius; ddy++) {
+                                            for (let ddx = -searchRadius; ddx <= searchRadius; dddx++) {
+                                                if (ddx === 0 && ddy === 0) continue;
+                                                
+                                                const nnx = nx + ddx;
+                                                const nny = ny + ddy;
+                                                
+                                                if (nnx >= 0 && nnx < width && nny >= 0 && nny < height) {
+                                                    const nnIndex = (nny * width + nnx) * 4;
+                                                    const nnColor = [
+                                                        data[nnIndex],
+                                                        data[nnIndex + 1],
+                                                        data[nnIndex + 2]
+                                                    ];
+                                                    
+                                                    const nnBrightness = 0.299 * nnColor[0] + 0.587 * nnColor[1] + 0.114 * nnColor[2];
+                                                    const nnBackgroundDiff = euclideanDistance(nnColor, backgroundColor);
+                                                    
+                                                    if (nnBrightness >= whiteThreshold && nnBackgroundDiff > backgroundDiffThreshold) {
+                                                        neighborStarPoints++;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
+                                        if (neighborStarPoints >= 1) {
+                                            candidateCenter = [nx, ny];
+                                            foundBetterCenter = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 检查是否重复
+                        let isDuplicate = false;
+                        for (const star of detectedStars) {
+                            if (Math.abs(candidateCenter[0] - star.center[0]) <= 5 && Math.abs(candidateCenter[1] - star.center[1]) <= 5) {
+                                isDuplicate = true;
+                                break;
+                            }
+                        }
+                        
+                        if (isDuplicate) continue;
+                        
+                        // 检查圆形分布
+                        const [cx, cy] = candidateCenter;
+                        const circularPoints = [];
+                        
+                        for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+                            for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+                                if (dx === 0 && dy === 0) continue;
+                                
+                                const nx = cx + dx;
+                                const ny = cy + dy;
+                                const distance = Math.sqrt(dx * dx + dy * dy);
+                                
+                                if (distance <= searchRadius && nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const neighborIndex = (ny * width + nx) * 4;
+                                    const neighborColor = [
+                                        data[neighborIndex],
+                                        data[neighborIndex + 1],
+                                        data[neighborIndex + 2]
+                                    ];
+                                    
+                                    const neighborBrightness = 0.299 * neighborColor[0] + 0.587 * neighborColor[1] + 0.114 * neighborColor[2];
+                                    const neighborBackgroundDiff = euclideanDistance(neighborColor, backgroundColor);
+                                    
+                                    if (neighborBrightness >= whiteThreshold && neighborBackgroundDiff > backgroundDiffThreshold) {
+                                        circularPoints.push([nx, ny]);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 检查是否满足圆形分布条件
+                        if (circularPoints.length >= minCircularPoints) {
+                            // 简单角度分布检查
+                            const sectors = [0, 0, 0, 0, 0, 0, 0, 0];
+                            for (const [px, py] of circularPoints) {
+                                const angle = Math.atan2(py - cy, px - cx);
+                                let normalizedAngle = angle < 0 ? angle + 2 * Math.PI : angle;
+                                const sector = Math.floor(normalizedAngle / (Math.PI / 4)) % 8;
+                                sectors[sector]++;
+                            }
+                            
+                            const occupiedSectors = sectors.filter(count => count > 0).length;
+                            
+                            if (occupiedSectors >= 3) {
+                                detectedStars.push({
+                                    center: candidateCenter,
+                                    points: circularPoints,
+                                    sectorDistribution: sectors
+                                });
+                                
+                                // 标记为已访问
+                                visited[cy * width + cx] = true;
+                                for (const [px, py] of circularPoints) {
+                                    if (py * width + px < visited.length) {
+                                        visited[py * width + px] = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            starCenters = detectedStars;
+            starCount = detectedStars.length;
+            
+            // 更新检测参数显示
+            detectionParams.querySelector('.stat-value').textContent = 
+                `亮度阈值: ${whiteThreshold}, 背景差异: ${backgroundDiffThreshold}, 搜索半径: ${searchRadius}`;
+            
+            // 显示前10个星星坐标
+            if (starCount > 0) {
+                starPointsContainer.style.display = 'block';
+                starPointsList.innerHTML = '';
+                
+                const maxStarsToShow = Math.min(10, starCount);
+                for (let i = 0; i < maxStarsToShow; i++) {
+                    const star = starCenters[i];
+                    const starItem = document.createElement('div');
+                    starItem.textContent = `星星 ${i+1}: 中心坐标 (${star.center[0]}, ${star.center[1]}), 周围点数: ${star.points.length}`;
+                    starPointsList.appendChild(starItem);
+                }
+            }
+        }
+        
+        // 标记星星
+        function markStars() {
+            if (!originalImage || starCount === 0) {
+                alert('没有检测到星星或未选择图片');
+                return;
+            }
+            
+            // 设置画布尺寸
+            starCanvas.width = originalImage.width;
+            starCanvas.height = originalImage.height;
+            
+            const ctx = starCanvas.getContext('2d');
+            
+            // 绘制原始图片
+            ctx.drawImage(originalImage, 0, 0);
+            
+            // 标记星星
+            for (const star of starCenters) {
+                const [cx, cy] = star.center;
+                
+                // 标记星星中心为红色
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 标记星星周围的点为黄色
+                ctx.fillStyle = '#FFFF00';
+                for (const [px, py] of star.points) {
+                    ctx.fillRect(px, py, 1, 1);
+                }
+                
+                // 绘制搜索半径圆
+                ctx.strokeStyle = '#FF0000';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // 启用保存按钮
+            saveImageBtn.disabled = false;
+            
+            alert(`已标记 ${starCount} 颗星星。红色点: 星星中心，黄色点: 星星周围点，红色圆圈: 搜索半径`);
+        }
+        
+        // 保存标记图片
+        function saveStarImage() {
+            if (!originalImage || starCount === 0) {
+                alert('没有可保存的图片');
+                return;
+            }
+            
+            // 创建下载链接
+            const dataURL = starCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = `star-marked-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 更新结果显示
+        function updateResultsDisplay() {
+            if (!analysisResult) return;
+            
+            // 更新结果文本
+            let resultText = `找到 ${analysisResult.validCount} 个有效点 (共 ${analysisResult.totalPoints} 个点)\n\n`;
+            
+            const maxPointsToShow = Math.min(10, analysisResult.validCount);
+            for (let i = 0; i < maxPointsToShow; i++) {
+                const point = analysisResult.validPoints[i];
+                resultText += `点 ${i+1}:\n`;
+                resultText += `  坐标: (${point.point[0]}, ${point.point[1]})\n`;
+                resultText += `  RGB值: (${point.rgb[0]}, ${point.rgb[1]}, ${point.rgb[2]})\n`;
+                resultText += `  16进制: ${point.hex}\n`;
+                resultText += `  灰度值: ${point.grayscale.toFixed(2)}\n\n`;
+            }
+            
+            if (analysisResult.validCount > 10) {
+                resultText += `... 还有 ${analysisResult.validCount - 10} 个点未显示\n\n`;
+            }
+            
+            resultsText.textContent = resultText;
+            
+            // 更新统计信息
+            imageTypeStat.querySelector('.stat-value').textContent = analysisResult.imageType;
+            avgRgbStat.querySelector('.stat-value').textContent = 
+                `(${analysisResult.avgRgb[0]}, ${analysisResult.avgRgb[1]}, ${analysisResult.avgRgb[2]})`;
+            avgHexStat.querySelector('.stat-value').textContent = analysisResult.avgHex;
+            gradientStat.querySelector('.stat-value').textContent = analysisResult.gradientC.toFixed(6) + ' /px';
+            yangyangGrayStat.querySelector('.stat-value').textContent = analysisResult.yangyangGray.toFixed(2);
+            
+            const grayStats = analysisResult.grayscaleStats;
+            grayStatsStat.querySelector('.stat-value').textContent = 
+                `平均=${grayStats.avg.toFixed(2)}, 最小=${grayStats.min.toFixed(2)}, 最大=${grayStats.max.toFixed(2)}`;
+            
+            // 更新颜色块
+            colorBlock.style.backgroundColor = analysisResult.avgHex;
+            colorInfo.querySelector('.stat-value').textContent = analysisResult.avgHex;
+            
+            // 更新星星计数
+            starCountDisplay.textContent = `检测到的星星数量: ${starCount}`;
+        }
+        
+        // 复制颜色到剪贴板
+        function copyColorToClipboard() {
+            if (!analysisResult || analysisResult.validCount === 0) return;
+            
+            const colorHex = analysisResult.avgHex;
+            navigator.clipboard.writeText(colorHex).then(() => {
+                alert(`已复制颜色代码: ${colorHex}`);
+            }).catch(err => {
+                console.error('复制失败:', err);
+            });
+        }
+        
+        // 辅助函数
+        function rgbToHex(r, g, b) {
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+        
+        function euclideanDistance(rgb1, rgb2) {
+            return Math.sqrt(
+                Math.pow(rgb1[0] - rgb2[0], 2) +
+                Math.pow(rgb1[1] - rgb2[1], 2) +
+                Math.pow(rgb1[2] - rgb2[2], 2)
+            );
+        }
+        
+        // 初始化
+        function init() {
+            console.log('星空背景色分析与星星检测工具已初始化');
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

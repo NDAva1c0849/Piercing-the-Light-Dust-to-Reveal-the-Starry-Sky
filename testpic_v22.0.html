@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空光污染检测与分析工具（仰角条件修正版）</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Arial',sans-serif; }
+        body { background:#0d041c; color:#e6e6e6; padding:10px; line-height:1.4; }
+        .container { max-width:1400px; margin:0 auto; background:#12062b; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.5); padding:15px; }
+        header { text-align:center; margin-bottom:15px; padding-bottom:10px; border-bottom:2px solid #0f3460; }
+        h1 { font-size:24px; color:#4cc9f0; margin-bottom:5px; }
+        .subtitle { color:#aaa; font-size:14px; }
+        .main-content { display:flex; flex-wrap:wrap; gap:15px; }
+        .left-panel { flex:1; min-width:320px; max-width:48%; }
+        .right-panel { flex:1; min-width:320px; max-width:48%; }
+        .control-panel { background:#1c0849; border-radius:8px; padding:15px; margin-bottom:15px; }
+        .file-upload { margin-bottom:15px; }
+        .file-input { width:100%; padding:8px; background:#1a1a2e; border:2px dashed #4cc9f0; border-radius:5px; color:#e6e6e6; cursor:pointer; margin-bottom:8px; }
+        .preview-container { width:100%; height:200px; background:#1a1a2e; border-radius:5px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:10px; }
+        .preview-image { max-width:100%; max-height:100%; object-fit:contain; }
+        .buttons { display:flex; gap:8px; margin-bottom:10px; }
+        .btn { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:0.3s; flex:1; font-size:14px; }
+        .btn-primary { background:#4CAF50; color:white; } .btn-primary:hover { background:#3d8b40; }
+        .btn-secondary { background:#FF9800; color:white; } .btn-secondary:hover { background:#e68a00; }
+        .btn-info { background:#4cc9f0; color:white; } .btn-info:hover { background:#3aa8d0; }
+        .btn:disabled { background:#555; cursor:not-allowed; }
+        .results-panel { background:#1c0849; border-radius:8px; padding:15px; margin-bottom:15px; }
+        .section-title { font-size:16px; color:#4cc9f0; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #1a1a2e; }
+        .results-text { background:#1a1a2e; border-radius:5px; padding:10px; height:250px; overflow-y:auto; font-family:monospace; font-size:12px; white-space:pre-wrap; margin-bottom:10px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:10px; margin-bottom:15px; }
+        .stat-item { background:#1a1a2e; padding:10px; border-radius:5px; border-left:4px solid #4cc9f0; }
+        .stat-label { font-size:11px; color:#aaa; margin-bottom:3px; }
+        .stat-value { font-size:13px; font-weight:bold; color:#fff; }
+        .color-display { background:#1c0849; border-radius:8px; padding:15px; text-align:center; margin-bottom:15px; }
+        .color-block { width:120px; height:120px; margin:0 auto 10px; border-radius:10px; border:3px solid #1a1a2e; background:#333; cursor:pointer; transition:0.3s; }
+        .color-block:hover { transform:scale(1.05); }
+        .color-info { font-size:12px; color:#aaa; margin-top:8px; }
+        .star-results { background:#1c0849; border-radius:8px; padding:15px; }
+        .star-count { font-size:18px; color:#ff4757; font-weight:bold; margin-bottom:10px; }
+        .processing-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:1000; display:none; }
+        .processing-content { background:#12062b; padding:25px; border-radius:10px; text-align:center; max-width:400px; }
+        .spinner { width:40px; height:40px; border:4px solid #0f3460; border-top:4px solid #4cc9f0; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 15px; }
+        @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+        .star-points-list { max-height:150px; overflow-y:auto; background:#1a1a2e; padding:8px; border-radius:5px; margin-top:8px; font-size:11px; }
+        .note { font-size:11px; color:#888; margin-top:15px; text-align:center; }
+        .algorithm-info { background:#1c0849; border-radius:8px; padding:12px; margin-top:15px; font-size:11px; }
+        .algorithm-info-btn { margin-bottom:10px; width:100%; }
+        .recommendation-box { background:#1a1a2e; border-radius:8px; padding:10px; margin-top:10px; border-left:4px solid #4CAF50; }
+        .recommendation-title { font-size:14px; color:#4cc9f0; margin-bottom:8px; }
+        .pollution-level { font-size:18px; font-weight:bold; margin:8px 0; padding:5px 10px; border-radius:5px; text-align:center; }
+        .level-1{color:#0f0;background:rgba(0,255,0,0.1)}.level-2{color:#40ff00;background:rgba(64,255,0,0.1)}.level-3{color:#80ff00;background:rgba(128,255,0,0.1)}.level-4{color:#c0ff00;background:rgba(192,255,0,0.1)}.level-5{color:#ff0;background:rgba(255,255,0,0.1)}.level-6{color:#ffc000;background:rgba(255,192,0,0.1)}.level-7{color:#ff8000;background:rgba(255,128,0,0.1)}.level-8{color:#ff4000;background:rgba(255,64,0,0.1)}.level-9{color:#f00;background:rgba(255,0,0,0.1)}.level-10{color:#e5004b;background:rgba(229,0,75,0.15)}.level-11{color:#cc0099;background:rgba(204,0,153,0.15)}.level-12{color:#9900cc;background:rgba(153,0,204,0.15)}.level-13{color:#6600ff;background:rgba(102,0,255,0.15)}
+        .extended-level-badge{display:inline-block;background:#ff4757;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold;margin-left:6px;vertical-align:middle;animation:pulse-badge 2s infinite}
+        @keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.6}}
+        .visible-stars-panel{background:#1c0849;border-radius:8px;padding:15px;margin-top:15px}
+        .visible-stars-list{max-height:250px;overflow-y:auto;background:#1a1a2e;border-radius:5px;padding:10px;margin-top:8px}
+        .star-item{padding:6px;margin-bottom:4px;border-radius:3px;border-left:4px solid #4cc9f0;background:rgba(26,26,46,0.7);cursor:pointer;transition:.3s}
+        .star-item:hover{background:rgba(26,26,46,0.9);transform:translateX(3px)}
+        .star-item.visible{border-left-color:#ff4757;background:rgba(255,71,87,0.1)}
+        .star-item.invisible{border-left-color:#888;background:rgba(136,136,136,0.1)}
+        .star-name{font-weight:bold;font-size:13px}.star-details{font-size:11px;color:#aaa;margin-top:2px}
+        .star-constellation{display:inline-block;background:#0f3460;padding:2px 5px;border-radius:3px;font-size:10px;margin-right:4px}
+        .star-magnitude{display:inline-block;font-size:10px;color:#fc0}
+        .star-visible-marker{font-weight:bold;margin-left:4px}.star-visible-marker.visible{color:#ff4757}.star-visible-marker.invisible{color:#888}
+        .location-info{background:#1a1a2e;border-radius:5px;padding:10px;margin-bottom:10px;border-left:4px solid #4cc9f0}
+        .moon-impact-info{background:#1a1a2e;border-radius:5px;padding:10px;margin-bottom:10px;border-left:4px solid #f0c674}
+        .moon-phase-icon{display:inline-block;width:20px;height:20px;background:#f0c674;border-radius:50%;margin-right:6px;vertical-align:middle}
+        .moon-phase-icon.new{background:#333;box-shadow:inset 0 0 0 2px #f0c674}
+        .moon-phase-icon.first-quarter{background:linear-gradient(to right,#f0c674 50%,#333 50%)}
+        .moon-phase-icon.full{background:#f0c674}
+        .moon-phase-icon.last-quarter{background:linear-gradient(to left,#f0c674 50%,#333 50%)}
+        .moon-impact-level{display:inline-block;padding:2px 6px;border-radius:3px;font-size:11px;font-weight:bold;margin-left:4px}
+        .impact-low{background:rgba(0,255,0,0.2);color:#0f0}.impact-medium{background:rgba(255,165,0,0.2);color:#ffa500}.impact-high{background:rgba(255,0,0,0.2);color:#f00}
+        .star-detail-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:2000;align-items:center;justify-content:center}
+        .star-detail-content{background:#12062b;border-radius:10px;padding:20px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto}
+        .star-detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;border-bottom:1px solid #1a1a2e;padding-bottom:8px}
+        .star-detail-title{font-size:20px;color:#4cc9f0}.close-modal{background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+        .close-modal:hover{background:#1a1a2e;color:#fff}
+        .star-position-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px}
+        .position-card{background:#1a1a2e;border-radius:8px;padding:12px}
+        .position-card-title{font-size:14px;color:#4cc9f0;margin-bottom:8px}.position-value{font-size:18px;font-weight:bold;color:#fff}
+        .position-description{font-size:11px;color:#aaa}
+        .moon-relation-info{background:#1a1a2e;border-radius:8px;padding:12px;margin-bottom:15px}
+        .observation-tips{background:#1a1a2e;border-radius:8px;padding:12px}.observation-tips-title{font-size:14px;color:#4cc9f0;margin-bottom:8px}
+        .tip-item{display:flex;align-items:flex-start;margin-bottom:8px}.tip-icon{width:20px;height:20px;background:#0f3460;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:8px; font-size:10px;}
+        .tip-text{font-size:12px;color:#e6e6e6}.warning-icon{color:#ff4757;margin-left:8px}
+        .unobservable-badge{display:inline-block;background:#ff4757;color:#fff;padding:2px 6px;border-radius:3px;font-size:12px;margin-left:8px;font-weight:bold}
+        .algorithm-detail-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:3000;padding:20px;align-items:center;justify-content:center}
+        .algorithm-detail-content{background:#12062b;border-radius:10px;padding:20px;max-width:800px;width:90%;max-height:90vh;overflow-y:auto}
+        .algorithm-detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid #1a1a2e}
+        .algorithm-detail-title{font-size:22px;color:#4cc9f0}
+        .algorithm-section{margin-bottom:25px;padding:15px;background:#1a1a2e;border-radius:8px;border-left:4px solid #4cc9f0}
+        .algorithm-section-title{font-size:16px;color:#4cc9f0;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #2a2a3e}
+        .algorithm-step{margin-bottom:12px;padding:10px;background:rgba(26,26,46,0.7);border-radius:5px;border-left:3px solid #0f3460}
+        .algorithm-step-title{font-size:14px;color:#ffcc00;margin-bottom:5px;display:flex;align-items:center}
+        .algorithm-step-title i{margin-right:8px;font-size:13px}
+        .algorithm-step-content{font-size:13px;color:#e6e6e6;line-height:1.5;padding-left:20px}
+        .formula{background:rgba(76,201,240,0.1);padding:8px;border-radius:5px;margin:8px 0;font-family:monospace;font-size:12px;border-left:3px solid #4cc9f0}
+        .example{background:rgba(255,204,0,0.1);padding:8px;border-radius:5px;margin:8px 0;font-size:12px;border-left:3px solid #ffcc00}
+        .condition{background:rgba(76,175,80,0.1);padding:8px;border-radius:5px;margin:8px 0;font-size:12px;border-left:3px solid #4CAF50}
+        .highlight{color:#ffcc00;font-weight:bold}
+        .angle-input-group{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+        .angle-input-group label{color:#ccc;font-size:13px}
+        .angle-input-group input{width:70px;padding:6px;background:#1a1a2e;border:1px solid #4cc9f0;border-radius:5px;color:#fff;text-align:center}
+        .severe-warning { background: #1a0000; border: 2px solid #ff0000; border-radius: 8px; padding: 15px; margin-top: 10px; text-align: center; color: #ff5555; font-size: 13px; line-height: 1.5; }
+        @media (max-width:1000px){ .main-content { flex-direction:column; } .left-panel, .right-panel { max-width:100%; } }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>星空光污染检测与分析工具</h1>
+        <p class="subtitle">分析星空图片，评估光污染等级（仰角条件修正）</p>
+    </header>
+    <div class="main-content">
+        <div class="left-panel">
+            <div class="control-panel">
+                <h2 class="section-title">图片上传与参数</h2>
+                <div class="file-upload"><input type="file" id="imageInput" class="file-input" accept="image/*"></div>
+                <div class="angle-input-group">
+                    <label for="angleInput">拍摄仰角 (度)：</label>
+                    <input type="number" id="angleInput" placeholder="例如 30" step="any" min="0" max="90">
+                    <span style="color:#888;font-size:11px;">键入角度以启用修正模型</span>
+                </div>
+                <div class="preview-container">
+                    <img id="imagePreview" class="preview-image" src="" alt="图片预览">
+                    <div id="noPreview">暂无图片</div>
+                </div>
+                <div class="buttons">
+                    <button id="analyzeBtn" class="btn btn-primary" disabled>分析图片</button>
+                    <button id="saveImageBtn" class="btn btn-secondary" disabled>保存标记图片</button>
+                </div>
+                <div id="imageInfo" class="stat-item"><div class="stat-label">图片信息</div><div class="stat-value">未选择图片</div></div>
+            </div>
+            <div class="results-panel">
+                <h2 class="section-title">统计结果</h2>
+                <div class="stats-grid">
+                    <div id="imageTypeStat" class="stat-item"><div class="stat-label">图片类型</div><div class="stat-value">-</div></div>
+                    <div id="avgRgbStat" class="stat-item"><div class="stat-label">平均RGB值</div><div class="stat-value">-</div></div>
+                    <div id="avgHexStat" class="stat-item"><div class="stat-label">平均16进制</div><div class="stat-value">-</div></div>
+                    <div id="gradientStat" class="stat-item"><div class="stat-label">递变量c</div><div class="stat-value">-</div></div>
+                    <div id="robustGrayStat" class="stat-item"><div class="stat-label">稳健灰度均值</div><div class="stat-value">-</div></div>
+                    <div id="standardGrayStat" class="stat-item"><div class="stat-label">标准灰度值</div><div class="stat-value">-</div></div>
+                    <div id="centerGrayStat" class="stat-item"><div class="stat-label">中心50x50灰度</div><div class="stat-value">-</div></div>
+                    <div id="pollutionLevelStat" class="stat-item"><div class="stat-label">光污染预测等级</div><div class="stat-value">-</div></div>
+                </div>
+                <div class="color-display">
+                    <h2 class="section-title">平均颜色色块</h2>
+                    <div id="colorBlock" class="color-block"></div>
+                    <p class="color-info">点击色块可复制颜色代码</p>
+                    <div id="colorInfo" class="stat-item"><div class="stat-label">当前颜色</div><div class="stat-value">#000000</div></div>
+                </div>
+                <h2 class="section-title">分析结果文本</h2>
+                <div id="resultsText" class="results-text">请先上传并分析图片...</div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div id="recommendationContainer" style="display:none;">
+                <div class="recommendation-box">
+                    <div class="recommendation-title">光污染等级评估</div>
+                    <div id="pollutionLevelDisplay" class="pollution-level">-</div>
+                    <div id="pollutionDescription" class="stat-value">-</div>
+                </div>
+                <div id="severeWarningBox" class="severe-warning" style="display:none;">
+                    警告：此处光害极强，请勿长时间停留。<br>
+若您需要在此区域内休息，请确保您拥有适宜的遮光方案，否则强光害可能影响睡眠质量，并诱发头晕、视疲劳、偏头痛等症状。<br>
+                    同时，该区域可能包含某些特殊光线或灯光闪烁。在这些因素的刺激下，极个别人可能会出现癫痫症状。某些特殊情况也有可能对此前没有癫痫病史的一部分人触发癫痫症状。<br>
+                    如果您或您的家庭成员有此类病史，请在进入本区域及类似区域前咨询医生的建议。如果您在此区域活动时出现以下任何一种症状：头晕，视线模糊，眼部或肌肉抽搐，失去知觉，失去方向感，不由自主地移动，抽搐-请立即离开此区域，并咨询医生的建议。
+                </div>
+                <div class="recommendation-box">
+                    <div class="recommendation-title">可见星座推断</div>
+                    <div id="constellationInfo" class="stat-value">-</div>
+                </div>
+                <div class="recommendation-box">
+                    <div class="recommendation-title">相机参数建议</div>
+                    <div id="cameraAdvice" class="stat-value">-</div>
+                </div>
+            </div>
+            <div class="visible-stars-panel" id="visibleStarsPanel" style="display:none;">
+                <h2 class="section-title">今晚可见星体 (考虑月球影响)</h2>
+                <div class="location-info"><div class="stat-label">地理位置</div><div class="stat-value">中国上海 (31.23°N, 121.47°E)</div><div class="stat-label">观测时间</div><div id="observationTime" class="stat-value">-</div><div class="stat-label">根据光污染等级筛选</div><div id="visibilityFilter" class="stat-value">-</div></div>
+                <div id="moonImpactInfo" class="moon-impact-info" style="display:none;"><div class="stat-label">月球影响分析</div><div id="moonPhaseInfo" class="stat-value">-</div><div class="stat-label">月球对观测的影响</div><div id="moonImpactLevel" class="stat-value">-</div><div class="stat-label">建议</div><div id="moonAdvice" class="stat-value">-</div></div>
+                <div id="visibleStarsList" class="visible-stars-list"></div>
+                <div class="note">点击星体条目查看详细位置和观测指引</div>
+            </div>
+            <div class="star-results">
+                <h2 class="section-title">星星检测结果</h2>
+                <div id="starCount" class="star-count">检测到的星星数量: -</div>
+                <div id="detectionParams" class="stat-item"><div class="stat-label">检测参数</div><div class="stat-value">亮度阈值: 30, 背景差异: 5, 搜索半径: 10</div></div>
+                <div id="excludedAreaStat" class="stat-item"><div class="stat-label">星星排除区域</div><div class="stat-value">-</div></div>
+                <div id="starPointsContainer" style="display:none;"><div class="stat-label">星星坐标 (前10个)</div><div id="starPointsList" class="star-points-list"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="algorithm-info">
+        <button id="showAlgorithmDetail" class="btn btn-info algorithm-info-btn"><i class="fas fa-info-circle"></i> 查看完整算法说明（背景色分析及星星检测逻辑）</button>
+        <p style="font-size:11px; margin-top:5px;">算法基于二次公式反解与仰角修正，具体步骤请点击按钮查看</p>
+    </div>
+</div>
+
+<div id="processingOverlay" class="processing-overlay"><div class="processing-content"><div class="spinner"></div><h3>处理中...</h3><p id="processingMessage">正在分析图片，请稍候</p><p id="processingProgress"></p></div></div>
+<div id="starDetailModal" class="star-detail-modal"><div class="star-detail-content"><div class="star-detail-header"><h3 id="starDetailTitle" class="star-detail-title">星体详细信息</h3><button id="closeStarDetail" class="close-modal">&times;</button></div><div id="starDetailContent"></div></div></div>
+<div id="algorithmDetailModal" class="algorithm-detail-modal">
+    <div class="algorithm-detail-content">
+        <div class="algorithm-detail-header">
+            <h3 class="algorithm-detail-title">背景色分析及星星检测算法详解</h3>
+            <button id="closeAlgorithmDetail" class="close-modal">&times;</button>
+        </div>
+        <div class="algorithm-section">
+            <h4 class="algorithm-section-title">背景色判断以及灰度值计算逻辑</h4>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤1：初始化图像</div><div class="algorithm-step-content">向程序传入一张图片，读取这张图片的宽度w和高度h。</div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤2：选取候选点P</div><div class="algorithm-step-content">在横坐标不超过w，纵坐标不超过h的范围内任取一个点P(a,b)，并且获取该点的RGB坐标(r,g,b)。</div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤3：采集周边像素数据</div><div class="algorithm-step-content">获取点P左侧20个像素点的RGB坐标……以此类推，获取右侧、上侧、下侧各20个像素点的RGB坐标。将这些点按照上、下、左、右四个方向分为四组。</div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤4：计算颜色差异值d</div><div class="algorithm-step-content"><div class="formula">计算公式：d = √[(r₁-r₂)² + (g₁-g₂)² + (b₁-b₂)²]</div></div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤5：计算变化量delta</div><div class="algorithm-step-content"><div class="formula">计算公式：delta = |d_n - d_(n+1)|（取绝对值）</div></div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤6：有效性判定</div><div class="algorithm-step-content"><div class="condition">条件1：如果所有的delta值都小于等于5，则输出P点的RGB坐标以及其16进制编码。</div><div class="condition">条件2：如果有5个以上的delta值大于等于5，则重新寻找一个P点。</div></div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤7：多区域采样</div><div class="algorithm-step-content">把图片按平铺方式分割成若干100*100的像素块，P点在其中心点。取出所有有效的P点并计算平均背景色及平均灰度值。</div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤8：极值分析与递变量计算</div><div class="algorithm-step-content"><div class="formula">c = (最大灰度值 - 最小灰度值) ÷ (两点之间的坐标欧氏距离)</div></div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-play"></i> 步骤9：稳健灰度均值计算</div><div class="algorithm-step-content">去除图片中所有异常亮度的点以后，计算其他点所有灰度的平均值，得到稳健灰度均值。</div></div>
+        </div>
+        <div class="algorithm-section">
+            <h4 class="algorithm-section-title">简化版：星空背景色分析</h4>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-layer-group"></i> 第一阶段：选取有效基准点P</div><div class="algorithm-step-content">步骤1-6：初始化图像、选取候选点、采集周边像素、计算d值、计算delta值、有效性判定。</div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-layer-group"></i> 第二阶段：多区域采样</div><div class="algorithm-step-content">步骤7-8：图像分割为100×100像素块，批量验证P点。</div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-layer-group"></i> 第三阶段：统计分析</div><div class="algorithm-step-content">步骤9-11：计算平均值、极值分析、计算递变量c。</div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-layer-group"></i> 第四阶段：稳健灰度均值计算</div><div class="algorithm-step-content">步骤12：去除异常亮度点后求灰度平均值，得到稳健灰度均值。</div></div>
+        </div>
+        <div class="algorithm-section">
+            <h4 class="algorithm-section-title">星星识别算法逻辑</h4>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-star"></i> 原始星星判断算法逻辑</div><div class="algorithm-step-content">1. 分析背景色。2. 检测异于背景色且接近白色的像素点。3. 小簇像素点群（通常十几个至50个）判断为一颗星星。4. 输出星星数量并提供标记功能。5. 半径10像素内搜索。6. 近圆形排列则计数。7. 不重复计算。</div></div>
+            <div class="algorithm-step"><div class="algorithm-step-title"><i class="fas fa-star"></i> 简化版：星星识别部分</div><div class="algorithm-step-content">1. <span class="highlight">分析背景</span> 2. <span class="highlight">检测候选像素点</span> 3. <span class="highlight">识别并计数星星</span> 4. <span class="highlight">去除重复计数</span> 5. <span class="highlight">输出结果</span></div></div>
+        </div>
+        <div class="algorithm-section">
+            <h4 class="algorithm-section-title">光污染等级预测（二次公式反解）</h4>
+            <div class="algorithm-step"><div class="algorithm-step-content"><p><strong>公式：</strong> G(x) = (19/14)·x² + (6/7)·x - 321/40</p><p>输入：图片中心50x50像素的平均灰度值 G</p><p>反解二次方程得到预测等级 x，再根据仰角进行条件修正。</p></div></div>
+        </div>
+        <div class="note" style="margin-top:15px; text-align:center;">以上为完整的背景色分析及星星检测算法逻辑说明。</div>
+    </div>
+</div>
+<canvas id="imageCanvas" style="display:none;"></canvas><canvas id="starCanvas" style="display:none;"></canvas><canvas id="subtractedCanvas" style="display:none;"></canvas><canvas id="starMaskCanvas" style="display:none;"></canvas>
+
+<script>
+    // 全局变量
+    let originalImage = null, imageData = null, analysisResult = null;
+    let starCenters = [], starCount = 0, starMarkedImageUrl = null;
+    let standardGrayValue = 0, excludedPixelCount = 0;
+    let pollutionLevel = 0, pollutionLevelInt = 0, pollutionDescription = "";
+    let isGradientImage = false, starDetectionTruncated = false;
+    let moonPhase = "", moonAge = 0, moonImpact = "", moonIllumination = 0;
+    let centerGrayValue = 0, appliedAngle = null;
+
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const noPreview = document.getElementById('noPreview');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const saveImageBtn = document.getElementById('saveImageBtn');
+    const imageInfo = document.getElementById('imageInfo');
+    const resultsText = document.getElementById('resultsText');
+    const imageTypeStat = document.getElementById('imageTypeStat');
+    const avgRgbStat = document.getElementById('avgRgbStat');
+    const avgHexStat = document.getElementById('avgHexStat');
+    const gradientStat = document.getElementById('gradientStat');
+    const robustGrayStat = document.getElementById('robustGrayStat');
+    const standardGrayStat = document.getElementById('standardGrayStat');
+    const centerGrayStat = document.getElementById('centerGrayStat');
+    const pollutionLevelStat = document.getElementById('pollutionLevelStat');
+    const colorBlock = document.getElementById('colorBlock');
+    const colorInfo = document.getElementById('colorInfo');
+    const starCountDisplay = document.getElementById('starCount');
+    const detectionParams = document.getElementById('detectionParams');
+    const excludedAreaStat = document.getElementById('excludedAreaStat');
+    const starPointsContainer = document.getElementById('starPointsContainer');
+    const starPointsList = document.getElementById('starPointsList');
+    const processingOverlay = document.getElementById('processingOverlay');
+    const processingMessage = document.getElementById('processingMessage');
+    const processingProgress = document.getElementById('processingProgress');
+    const imageCanvas = document.getElementById('imageCanvas');
+    const starCanvas = document.getElementById('starCanvas');
+    const subtractedCanvas = document.getElementById('subtractedCanvas');
+    const starMaskCanvas = document.getElementById('starMaskCanvas');
+    const recommendationContainer = document.getElementById('recommendationContainer');
+    const pollutionLevelDisplay = document.getElementById('pollutionLevelDisplay');
+    const pollutionDescriptionDisplay = document.getElementById('pollutionDescription');
+    const severeWarningBox = document.getElementById('severeWarningBox');
+    const constellationInfo = document.getElementById('constellationInfo');
+    const cameraAdvice = document.getElementById('cameraAdvice');
+    const visibleStarsPanel = document.getElementById('visibleStarsPanel');
+    const visibleStarsList = document.getElementById('visibleStarsList');
+    const observationTime = document.getElementById('observationTime');
+    const visibilityFilter = document.getElementById('visibilityFilter');
+    const moonImpactInfo = document.getElementById('moonImpactInfo');
+    const moonPhaseInfo = document.getElementById('moonPhaseInfo');
+    const moonImpactLevel = document.getElementById('moonImpactLevel');
+    const moonAdvice = document.getElementById('moonAdvice');
+    const starDetailModal = document.getElementById('starDetailModal');
+    const starDetailTitle = document.getElementById('starDetailTitle');
+    const starDetailContent = document.getElementById('starDetailContent');
+    const closeStarDetail = document.getElementById('closeStarDetail');
+    const showAlgorithmDetail = document.getElementById('showAlgorithmDetail');
+    const algorithmDetailModal = document.getElementById('algorithmDetailModal');
+    const closeAlgorithmDetail = document.getElementById('closeAlgorithmDetail');
+    const angleInput = document.getElementById('angleInput');
+
+    const cameraAdviceDatabase = {
+        1: { iso:"800-1600", shutter:"30-60秒", aperture:"f/2.8-f/4", advice:"使用低ISO以减少噪点，长曝光捕捉暗弱天体", tips:["使用延时摄影","拍摄RAW格式","无需光污染滤镜"] },
+        2: { iso:"800-1600", shutter:"20-40秒", aperture:"f/2.8-f/4", advice:"适当提高ISO，中等曝光时间", tips:["使用光污染滤镜","拍摄RAW格式","多帧叠加降噪"] },
+        3: { iso:"1600-3200", shutter:"15-30秒", aperture:"f/2.8最大光圈", advice:"需要较高ISO，缩短曝光时间", tips:["使用光污染滤镜","多帧叠加","后期降噪处理"] },
+        4: { iso:"1600-3200", shutter:"10-25秒", aperture:"最大光圈", advice:"较高ISO设置，中等曝光时间", tips:["必须使用光污染滤镜","多帧叠加","强力后期处理"] },
+        5: { iso:"3200-6400", shutter:"8-20秒", aperture:"最大光圈", advice:"高ISO设置，缩短曝光时间", tips:["强效光污染滤镜","密集多帧叠加","强力后期处理"] },
+        6: { iso:"3200-6400", shutter:"5-15秒", aperture:"最大光圈", advice:"高ISO，短曝光时间", tips:["专攻星轨摄影","使用星野赤道仪","视频叠加技术"] },
+        7: { iso:"6400-12800", shutter:"3-10秒", aperture:"最大光圈", advice:"极限ISO，极短曝光", tips:["专攻月亮和行星摄影","使用行星相机","视频叠加技术"] },
+        8: { iso:"12800+", shutter:"1-5秒", aperture:"最大光圈", advice:"极限设置，优先拍摄月亮和行星", tips:["使用高感光相机","专攻月球表面","行星视频叠加"] },
+        9: { iso:"自动", shutter:"<3秒", aperture:"最大光圈", advice:"不适合星空摄影", tips:["考虑红外摄影","城市夜景","创意光绘"] },
+        10: { iso:"自动", shutter:"<3秒", aperture:"最大光圈", advice:"不适合星空摄影", tips:["考虑高空城市夜景","街景","创意光绘"] },
+        11: { iso:"自动", shutter:"<3秒", aperture:"最大光圈", advice:"不适合星空摄影", tips:["考虑高空城市夜景","街景","小区域艺术照","创意光绘"] },
+        12: { iso:"N/A", shutter:"N/A", aperture:"N/A", advice:"N/A", tips:["请勿拍摄","避免在此环境下长期暴露"] },
+        13: { iso:"N/A", shutter:"N/A", aperture:"N/A", advice:"N/A", tips:["请勿拍摄","避免在此环境下长期暴露"] }
+    };
+
+    const constellationDatabase = {
+        1: { nakedEye:["所有主要星座","银河清晰可见","黄道光","对日照"], telescope:["所有梅西耶天体","行星状星云","球状星团","星系","彗星"], description:"极佳观测条件，肉眼可见银河细节，极限星等7.5+" },
+        2: { nakedEye:["所有主要星座","银河清晰","黄道光可见"], telescope:["所有明亮梅西耶天体","行星状星云","球状星团","星系"], description:"优秀观测条件，肉眼可见银河结构，极限星等7.0+" },
+        3: { nakedEye:["猎户座","大熊座","小熊座","天鹅座","天鹰座","天琴座","天蝎座","牧夫座"], telescope:["大多数梅西耶天体","主要星云和星团","明亮星系"], description:"良好乡村天空，银河可见但较暗，极限星等6.5" },
+        4: { nakedEye:["猎户座","大熊座","小熊座","天鹅座","天鹰座","天琴座"], telescope:["明亮梅西耶天体","主要星云和星团","行星和月球"], description:"乡村天空，银河微弱可见，极限星等6.0" },
+        5: { nakedEye:["猎户座","大熊座","小熊座","天鹅座"], telescope:["最亮梅西耶天体","月球、行星、最亮星团"], description:"过渡型乡村/郊区天空，极限星等5.5" },
+        6: { nakedEye:["猎户座","大熊座","小熊座"], telescope:["月球、行星、最亮星团","明亮星云"], description:"郊区天空，仅最亮天体可见，极限星等5.0" },
+        7: { nakedEye:["猎户座","大熊座"], telescope:["月球、行星","最亮星团M13、M31"], description:"明亮郊区/城市过渡区，极限星等4.5" },
+        8: { nakedEye:["猎户座腰带","北斗七星"], telescope:["月球、金星、木星、土星","最亮深空天体"], description:"城市天空，仅最亮恒星可见，极限星等4.0" },
+        9: { nakedEye:["仅最亮恒星","行星"], telescope:["月球","明亮行星"], description:"严重光污染城市，极限星等3.0以下" },
+        10: { nakedEye:["仅最亮恒星","行星"], telescope:["月球","明亮行星"], description:"扩展等级，波特尔9级，极限星等极低，完整星座不可见" },
+        11: { nakedEye:["仅最亮恒星","行星"], telescope:["月球","明亮行星"], description:"扩展等级，波特尔9级，极限星等极低，完整星座不可见" },
+        12: { nakedEye:["仅最亮恒星","行星"], telescope:["月球","明亮行星"], description:"扩展等级，波特尔9级，极限星等极低，完整星座不可见" },
+        13: { nakedEye:["仅最亮恒星","行星"], telescope:["月球","明亮行星"], description:"扩展等级，波特尔9级，极限星等极低，完整星座不可见" }
+    };
+
+    function inverseG(gray){
+        const a = 19.0/14.0, b = 6.0/7.0, c = -321.0/40.0 - gray;
+        const disc = b*b - 4*a*c;
+        if(disc < 0) return null;
+        const sqrtDisc = Math.sqrt(disc);
+        let x = (-b + sqrtDisc) / (2*a);
+        if(x < 0) x = (-b - sqrtDisc) / (2*a);
+        return x;
+    }
+
+    function getCenter50x50Gray(imgData){
+        const w = imgData.width, h = imgData.height, size = 50;
+        let sx = Math.max(0, Math.floor((w-size)/2)), sy = Math.max(0, Math.floor((h-size)/2));
+        let ex = Math.min(w, sx+size), ey = Math.min(h, sy+size);
+        sx = Math.max(0, ex-size); sy = Math.max(0, ey-size);
+        let sum = 0, cnt = 0;
+        const d = imgData.data;
+        for(let y = sy; y < ey; y++) for(let x = sx; x < ex; x++){
+            const i = (y*w+x)*4;
+            sum += 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+            cnt++;
+        }
+        return cnt > 0 ? sum/cnt : 0;
+    }
+
+    function calculatePollutionLevel(angleRad = null){
+        if(!analysisResult) return;
+        const raw = inverseG(centerGrayValue);
+        if(raw === null) { pollutionLevel = 1; pollutionLevelInt = 1; return; }
+        let predicted = raw;
+        const angleDeg = angleRad !== null ? angleRad * 180 / Math.PI : null;
+        appliedAngle = angleDeg;
+        if(angleRad !== null){
+            const angleDegVal = parseFloat(angleInput.value);
+            if(Math.abs(angleDegVal - 60) < 1e-6){
+                pollutionLevel = predicted - 0.5;
+            } else {
+                const t = angleRad - Math.PI/3;
+                const d_val = t * (0.7 * predicted - 2) + t*t * (-0.35 * predicted*predicted + 3.6 * predicted - 10);
+                pollutionLevel = predicted + d_val;
+            }
+        } else {
+            pollutionLevel = predicted - 0.5;
+        }
+        if(pollutionLevel < 1) pollutionLevel = 1;
+        pollutionLevelInt = Math.floor(pollutionLevel);
+        if(pollutionLevelInt < 1) pollutionLevelInt = 1;
+        if(pollutionLevelInt > 13) pollutionLevelInt = 13;
+        const descs = {
+            1:"极黑夜空(波特尔1级)",2:"典型暗空(波特尔2级)",3:"乡村夜空(波特尔3级)",4:"乡村/郊区过渡(波特尔4级)",5:"一般郊区(波特尔5级)",
+            6:"亮郊区(波特尔6级)",7:"郊区/城市过渡(波特尔7级)",8:"城市天空(波特尔8级)",9:"严重光污染城市(波特尔9级)",
+            10:"极强光害城市(扩展10级，波特尔9级)",11:"城市核心商业区(扩展11级，波特尔9级)",12:"极端光害区域(扩展12级，波特尔9级)",13:"灰度值饱和区域(扩展13级，波特尔9级)"
+        };
+        pollutionDescription = descs[pollutionLevelInt] || "未知";
+        if(isGradientImage) pollutionDescription += " (基于稳健灰度)";
+    }
+
+    const moonPhaseDatabase = {
+        new:{name:"新月",iconClass:"new",impact:"低",illumination:0,advice:"最佳观测时机，月光干扰最小"},
+        waxingCrescent:{name:"峨眉月",iconClass:"",impact:"低",illumination:25,advice:"月光干扰较小，适合观测"},
+        firstQuarter:{name:"上弦月",iconClass:"first-quarter",impact:"中",illumination:50,advice:"月光有一定干扰，建议观测较亮天体"},
+        waxingGibbous:{name:"盈凸月",iconClass:"",impact:"中高",illumination:75,advice:"月光干扰较大，建议观测亮星和行星"},
+        full:{name:"满月",iconClass:"full",impact:"高",illumination:100,advice:"月光干扰严重，仅适合观测最亮天体"},
+        waningGibbous:{name:"亏凸月",iconClass:"",impact:"中高",illumination:75,advice:"月光干扰较大，建议观测亮星和行星"},
+        lastQuarter:{name:"下弦月",iconClass:"last-quarter",impact:"中",illumination:50,advice:"月光有一定干扰，建议观测较亮天体"},
+        waningCrescent:{name:"残月",iconClass:"",impact:"低",illumination:25,advice:"月光干扰较小，适合观测"}
+    };
+
+    const shanghaiStarsDatabase = {
+        spring: [
+            { name:"轩辕十四", constellation:"狮子座", magnitude:1.35, type:"恒星", bestViewing:"21:00-23:00", visibility:[1,2,3,4], ra:10.14, dec:11.97, alt:45, az:150 },
+            { name:"大角星", constellation:"牧夫座", magnitude:-0.05, type:"恒星", bestViewing:"22:00-02:00", visibility:[1,2,3,4,5], ra:14.27, dec:19.18, alt:60, az:120 },
+            { name:"角宿一", constellation:"室女座", magnitude:0.98, type:"双星", bestViewing:"22:00-01:00", visibility:[1,2,3,4], ra:13.42, dec:-11.16, alt:40, az:170 },
+            { name:"五帝座一", constellation:"狮子座", magnitude:2.14, type:"恒星", bestViewing:"21:00-00:00", visibility:[1,2,3], ra:11.82, dec:14.57, alt:55, az:140 },
+            { name:"北斗七星", constellation:"大熊座", magnitude:1.8, type:"星群", bestViewing:"整夜可见", visibility:[1,2,3,4,5,6,7], ra:11.03, dec:61.75, alt:70, az:30 },
+            { name:"后发座星团", constellation:"后发座", magnitude:5.3, type:"疏散星团", bestViewing:"23:00-03:00", visibility:[1,2,3], ra:12.75, dec:26.10, alt:65, az:180 },
+            { name:"室女座星系团", constellation:"室女座", magnitude:8.5, type:"星系团", bestViewing:"23:00-02:00", visibility:[1,2], ra:12.48, dec:12.47, alt:50, az:190 },
+            { name:"木星", constellation:"狮子座", magnitude:-2.2, type:"行星", bestViewing:"21:00-23:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:11.5, dec:15.0, alt:52, az:145 },
+            { name:"金星", constellation:"金牛座", magnitude:-4.0, type:"行星", bestViewing:"19:00-21:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:4.5, dec:20.0, alt:35, az:275 },
+            { name:"火星", constellation:"巨蟹座", magnitude:0.5, type:"行星", bestViewing:"22:00-01:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:8.5, dec:20.0, alt:48, az:135 },
+            { name:"土星", constellation:"室女座", magnitude:0.5, type:"行星", bestViewing:"23:00-02:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:13.0, dec:-5.0, alt:42, az:165 }
+        ],
+        summer: [
+            { name:"织女星", constellation:"天琴座", magnitude:0.03, type:"恒星", bestViewing:"21:00-03:00", visibility:[1,2,3,4,5,6,7,8], ra:18.62, dec:38.78, alt:85, az:280 },
+            { name:"天津四", constellation:"天鹅座", magnitude:1.25, type:"恒星", bestViewing:"22:00-04:00", visibility:[1,2,3,4,5,6], ra:20.69, dec:45.28, alt:80, az:310 },
+            { name:"牛郎星", constellation:"天鹰座", magnitude:0.77, type:"恒星", bestViewing:"21:00-03:00", visibility:[1,2,3,4,5,6,7], ra:19.85, dec:8.87, alt:70, az:260 },
+            { name:"天鹅座X-1", constellation:"天鹅座", magnitude:8.9, type:"黑洞系统", bestViewing:"23:00-02:00", visibility:[1,2], ra:19.97, dec:35.20, alt:75, az:300 },
+            { name:"夏季大三角", constellation:"天琴/天鹅/天鹰", magnitude:"多星", type:"星群", bestViewing:"整夜可见", visibility:[1,2,3,4,5,6,7,8], ra:19.50, dec:30.00, alt:75, az:290 },
+            { name:"天蝎座心宿二", constellation:"天蝎座", magnitude:0.96, type:"红超巨星", bestViewing:"21:00-23:00", visibility:[1,2,3,4,5], ra:16.49, dec:-26.43, alt:25, az:180 },
+            { name:"人马座星云", constellation:"人马座", magnitude:6.0, type:"星云", bestViewing:"22:00-01:00", visibility:[1,2,3], ra:18.18, dec:-24.11, alt:30, az:190 },
+            { name:"武仙座球状星团", constellation:"武仙座", magnitude:5.8, type:"球状星团", bestViewing:"22:00-02:00", visibility:[1,2,3], ra:16.72, dec:36.46, alt:65, az:220 },
+            { name:"木星", constellation:"室女座", magnitude:-2.3, type:"行星", bestViewing:"22:00-00:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:13.5, dec:-8.0, alt:40, az:175 },
+            { name:"金星", constellation:"狮子座", magnitude:-4.1, type:"行星", bestViewing:"19:30-21:30", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:9.2, dec:18.0, alt:30, az:290 },
+            { name:"火星", constellation:"天秤座", magnitude:0.2, type:"行星", bestViewing:"23:00-02:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:15.0, dec:-15.0, alt:35, az:185 },
+            { name:"土星", constellation:"人马座", magnitude:0.4, type:"行星", bestViewing:"00:00-03:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:19.2, dec:-22.0, alt:25, az:200 }
+        ],
+        autumn: [
+            { name:"北落师门", constellation:"南鱼座", magnitude:1.16, type:"恒星", bestViewing:"22:00-04:00", visibility:[1,2,3,4,5], ra:22.96, dec:-29.62, alt:20, az:150 },
+            { name:"土司空", constellation:"鲸鱼座", magnitude:2.02, type:"恒星", bestViewing:"23:00-05:00", visibility:[1,2,3,4], ra:1.66, dec:-17.99, alt:40, az:180 },
+            { name:"飞马座四边形", constellation:"飞马座", magnitude:2.8, type:"星群", bestViewing:"21:00-02:00", visibility:[1,2,3,4,5,6], ra:23.07, dec:15.21, alt:60, az:90 },
+            { name:"仙女座星系", constellation:"仙女座", magnitude:3.4, type:"星系", bestViewing:"21:00-04:00", visibility:[1,2,3,4,5], ra:0.71, dec:41.27, alt:70, az:60 },
+            { name:"英仙座双星团", constellation:"英仙座", magnitude:4.3, type:"疏散星团", bestViewing:"22:00-03:00", visibility:[1,2,3], ra:2.33, dec:57.14, alt:75, az:40 },
+            { name:"仙后座W形", constellation:"仙后座", magnitude:2.2, type:"星群", bestViewing:"整夜可见", visibility:[1,2,3,4,5,6,7], ra:1.01, dec:60.72, alt:80, az:30 },
+            { name:"三角座星系", constellation:"三角座", magnitude:5.7, type:"星系", bestViewing:"22:00-02:00", visibility:[1,2,3], ra:1.89, dec:30.66, alt:65, az:70 },
+            { name:"木星", constellation:"天蝎座", magnitude:-2.1, type:"行星", bestViewing:"20:30-22:30", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:16.8, dec:-22.0, alt:20, az:175 },
+            { name:"金星", constellation:"室女座", magnitude:-4.0, type:"行星", bestViewing:"05:00-06:30", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:12.8, dec:-5.0, alt:15, az:110 },
+            { name:"火星", constellation:"天蝎座", magnitude:0.8, type:"行星", bestViewing:"21:00-23:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:16.2, dec:-20.0, alt:22, az:185 },
+            { name:"土星", constellation:"摩羯座", magnitude:0.6, type:"行星", bestViewing:"22:00-01:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:20.5, dec:-20.0, alt:30, az:160 }
+        ],
+        winter: [
+            { name:"天狼星", constellation:"大犬座", magnitude:-1.46, type:"恒星", bestViewing:"21:00-05:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:6.75, dec:-16.72, alt:30, az:150 },
+            { name:"参宿四", constellation:"猎户座", magnitude:0.42, type:"红超巨星", bestViewing:"21:00-04:00", visibility:[1,2,3,4,5,6,7,8], ra:5.92, dec:7.41, alt:50, az:120 },
+            { name:"参宿七", constellation:"猎户座", magnitude:0.18, type:"蓝超巨星", bestViewing:"21:00-04:00", visibility:[1,2,3,4,5,6,7,8], ra:5.24, dec:-8.20, alt:45, az:130 },
+            { name:"南河三", constellation:"小犬座", magnitude:0.34, type:"恒星", bestViewing:"22:00-05:00", visibility:[1,2,3,4,5,6,7], ra:7.66, dec:5.23, alt:55, az:140 },
+            { name:"毕宿五", constellation:"金牛座", magnitude:0.85, type:"红巨星", bestViewing:"21:00-03:00", visibility:[1,2,3,4,5,6,7], ra:4.60, dec:16.51, alt:60, az:110 },
+            { name:"猎户座大星云", constellation:"猎户座", magnitude:4.0, type:"星云", bestViewing:"22:00-03:00", visibility:[1,2,3,4,5], ra:5.59, dec:-5.38, alt:50, az:125 },
+            { name:"昴星团", constellation:"金牛座", magnitude:1.6, type:"疏散星团", bestViewing:"21:00-04:00", visibility:[1,2,3,4,5,6], ra:3.79, dec:24.11, alt:65, az:100 },
+            { name:"双子座北河二", constellation:"双子座", magnitude:1.93, type:"双星", bestViewing:"22:00-05:00", visibility:[1,2,3,4,5], ra:7.58, dec:31.89, alt:70, az:80 },
+            { name:"御夫座五车二", constellation:"御夫座", magnitude:0.08, type:"双星", bestViewing:"21:00-05:00", visibility:[1,2,3,4,5,6,7], ra:5.28, dec:46.00, alt:75, az:60 },
+            { name:"木星", constellation:"金牛座", magnitude:-2.4, type:"行星", bestViewing:"20:00-22:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:4.0, dec:20.0, alt:55, az:95 },
+            { name:"金星", constellation:"人马座", magnitude:-4.2, type:"行星", bestViewing:"17:30-19:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:19.0, dec:-22.0, alt:15, az:240 },
+            { name:"火星", constellation:"双鱼座", magnitude:0.3, type:"行星", bestViewing:"21:00-00:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:1.5, dec:10.0, alt:60, az:75 },
+            { name:"土星", constellation:"水瓶座", magnitude:0.7, type:"行星", bestViewing:"22:00-01:00", visibility:[1,2,3,4,5,6,7,8,9,10,11,12,13], ra:22.5, dec:-10.0, alt:35, az:120 }
+        ]
+    };
+
+    // 事件绑定
+    imageInput.addEventListener('change', handleImageUpload);
+    analyzeBtn.addEventListener('click', analyzeImage);
+    saveImageBtn.addEventListener('click', saveStarImage);
+    colorBlock.addEventListener('click', copyColorToClipboard);
+    closeStarDetail.addEventListener('click', ()=> starDetailModal.style.display='none');
+    showAlgorithmDetail.addEventListener('click', ()=> algorithmDetailModal.style.display='flex');
+    closeAlgorithmDetail.addEventListener('click', ()=> algorithmDetailModal.style.display='none');
+
+    function handleImageUpload(event){
+        const file = event.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e){
+            originalImage = new Image();
+            originalImage.onload = function(){
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                noPreview.style.display = 'none';
+                imageInfo.querySelector('.stat-value').textContent = `${file.name} (${originalImage.width}×${originalImage.height})`;
+                analyzeBtn.disabled = false;
+                resetResults();
+            };
+            originalImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function resetResults(){
+        analysisResult = null; starCenters = []; starCount = 0; starMarkedImageUrl = null;
+        standardGrayValue = 0; excludedPixelCount = 0; pollutionLevel = 0; pollutionLevelInt = 0;
+        pollutionDescription = ""; isGradientImage = false; starDetectionTruncated = false; centerGrayValue = 0;
+        appliedAngle = null;
+        resultsText.textContent = '请先上传并分析图片...';
+        imageTypeStat.querySelector('.stat-value').textContent = '-';
+        avgRgbStat.querySelector('.stat-value').textContent = '-';
+        avgHexStat.querySelector('.stat-value').textContent = '-';
+        gradientStat.querySelector('.stat-value').textContent = '-';
+        robustGrayStat.querySelector('.stat-value').textContent = '-';
+        standardGrayStat.querySelector('.stat-value').textContent = '-';
+        centerGrayStat.querySelector('.stat-value').textContent = '-';
+        pollutionLevelStat.querySelector('.stat-value').textContent = '-';
+        colorBlock.style.backgroundColor = '#333';
+        colorInfo.querySelector('.stat-value').textContent = '#000000';
+        starCountDisplay.textContent = '检测到的星星数量: -';
+        saveImageBtn.disabled = true;
+        excludedAreaStat.querySelector('.stat-value').textContent = '-';
+        starPointsContainer.style.display = 'none';
+        recommendationContainer.style.display = 'none';
+        severeWarningBox.style.display = 'none';
+        visibleStarsPanel.style.display = 'none';
+        moonImpactInfo.style.display = 'none';
+    }
+
+    async function analyzeImage(){
+        if(!originalImage) { alert('请先选择图片'); return; }
+        processingMessage.textContent = '正在分析图片...';
+        processingOverlay.style.display = 'flex';
+        try {
+            imageCanvas.width = originalImage.width; imageCanvas.height = originalImage.height;
+            const ctx = imageCanvas.getContext('2d'); ctx.drawImage(originalImage, 0, 0);
+            imageData = ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
+            centerGrayValue = getCenter50x50Gray(imageData);
+            let angleRad = null;
+            const angleDeg = parseFloat(angleInput.value);
+            if(!isNaN(angleDeg) && angleDeg >= 0 && angleDeg <= 90) angleRad = angleDeg * Math.PI / 180;
+            analysisResult = await findSuitablePoints(imageData);
+            isGradientImage = (analysisResult.imageType === "渐变型");
+            if(!isGradientImage){
+                await detectStarsCircular();
+                await markStars();
+                await calculateStandardGrayValue();
+            } else {
+                starCount = 0; standardGrayValue = analysisResult.robustGray; excludedPixelCount = 0;
+                detectionParams.querySelector('.stat-value').textContent = "渐变型图片，跳过星星检测";
+                excludedAreaStat.querySelector('.stat-value').textContent = "渐变型图片，不排除星星区域";
+                saveImageBtn.disabled = true;
+            }
+            await calculatePollutionLevel(angleRad);
+            await calculateMoonImpact();
+            updateResultsDisplay();
+            await calculateVisibleStars();
+            if(!isGradientImage && starCount > 0) saveImageBtn.disabled = false;
+            processingOverlay.style.display = 'none';
+        } catch(err){
+            console.error(err);
+            alert('分析出错: ' + err.message);
+            processingOverlay.style.display = 'none';
+        }
+    }
+
+    function getPixelColor(imgData, x, y){
+        if(x<0 || x>=imgData.width || y<0 || y>=imgData.height) return null;
+        const i = (y*imgData.width + x)*4;
+        return [imgData.data[i], imgData.data[i+1], imgData.data[i+2]];
+    }
+    function rgbToHex(r,g,b){ return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1).toUpperCase(); }
+    function rgbToGrayscale(rgb){ return 0.299*rgb[0] + 0.587*rgb[1] + 0.114*rgb[2]; }
+    function calcDist(rgb1, rgb2){ if(!rgb1||!rgb2) return Infinity; return Math.sqrt((rgb1[0]-rgb2[0])**2 + (rgb1[1]-rgb2[1])**2 + (rgb1[2]-rgb2[2])**2); }
+    function coordDist(p1, p2){ return Math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2); }
+
+    function calcRobustGray(imgData){
+        const w = imgData.width, h = imgData.height, d = imgData.data;
+        const grays = [];
+        for(let y=0; y<h; y++) for(let x=0; x<w; x++){
+            const i = (y*w+x)*4;
+            grays.push(0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]);
+        }
+        const mean = grays.reduce((a,b)=>a+b,0)/grays.length;
+        const std = Math.sqrt(grays.map(g=>(g-mean)**2).reduce((a,b)=>a+b,0)/grays.length);
+        const filtered = grays.filter(g => g <= mean + 2*std && g >= mean - 2*std);
+        return filtered.length > 0 ? filtered.reduce((a,b)=>a+b,0)/filtered.length : mean;
+    }
+
+    function classifyImageType(imgData, gradC){
+        const w = imgData.width, h = imgData.height, d = imgData.data;
+        const step = Math.max(1, Math.floor(w*h/20000));
+        const rs = [], gs = [], bs = [];
+        for(let y=0; y<h; y+=step) for(let x=0; x<w; x+=step){
+            const i = (y*w+x)*4;
+            rs.push(d[i]); gs.push(d[i+1]); bs.push(d[i+2]);
+        }
+        const stdF = arr => { const m = arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.map(v=>(v-m)**2).reduce((a,b)=>a+b,0)/arr.length); };
+        const avgStd = (stdF(rs)+stdF(gs)+stdF(bs))/3;
+        const corners = [
+            getPixelColor(imgData,0,0), getPixelColor(imgData,w-1,0),
+            getPixelColor(imgData,0,h-1), getPixelColor(imgData,w-1,h-1)
+        ];
+        const center = getPixelColor(imgData, Math.floor(w/2), Math.floor(h/2));
+        let maxDiff = 0;
+        for(const c of corners) if(c && center) { const d = calcDist(c,center); if(d>maxDiff) maxDiff = d; }
+        if(avgStd < 15 && maxDiff < 30) return "纯色型";
+        if(avgStd > 25 && maxDiff > 50) return "渐变型";
+        return gradC > 0.1 ? "渐变型" : "纯色型";
+    }
+
+    async function findSuitablePoints(imgData){
+        const w = imgData.width, h = imgData.height;
+        const bx = Math.floor(w/100), by = Math.floor(h/100);
+        const valid = [], all = [];
+        let processed = 0;
+        const total = bx * by;
+        for(let i=0; i<bx; i++) for(let j=0; j<by; j++){
+            const a = i*100+50, b = j*100+50;
+            if(a<20 || a>=w-20 || b<20 || b>=h-20) { processed++; continue; }
+            const pRgb = getPixelColor(imgData, a, b);
+            let deltaAbove5 = 0;
+            const dirs = {
+                left: Array.from({length:20}, (_,k)=>[a-(k+1), b]),
+                right: Array.from({length:20}, (_,k)=>[a+(k+1), b]),
+                up: Array.from({length:20}, (_,k)=>[a, b-(k+1)]),
+                down: Array.from({length:20}, (_,k)=>[a, b+(k+1)])
+            };
+            for(const [dir, coords] of Object.entries(dirs)){
+                const rgbs = coords.map(([x,y]) => getPixelColor(imgData, x, y));
+                const dVals = rgbs.map(rgb => rgb ? calcDist(pRgb, rgb) : Infinity);
+                for(let k=0; k<dVals.length-1; k++) if(Math.abs(dVals[k] - dVals[k+1]) >= 5) deltaAbove5++;
+            }
+            if(deltaAbove5 <= 5){
+                valid.push({
+                    point: [a,b],
+                    rgb: pRgb,
+                    hex: rgbToHex(pRgb[0], pRgb[1], pRgb[2]),
+                    grayscale: rgbToGrayscale(pRgb)
+                });
+            }
+            all.push({point:[a,b], rgb:pRgb});
+            processed++;
+            if(processed % 100 === 0){
+                processingProgress.textContent = `进度: ${Math.round(processed/total*100)}%`;
+                await new Promise(r => setTimeout(r, 0));
+            }
+        }
+        const robustGray = calcRobustGray(imgData);
+        const imageType = classifyImageType(imgData, 0);
+        if(valid.length > 0){
+            let sr=0, sg=0, sb=0;
+            for(const p of valid){ sr+=p.rgb[0]; sg+=p.rgb[1]; sb+=p.rgb[2]; }
+            const avgRgb = [Math.round(sr/valid.length), Math.round(sg/valid.length), Math.round(sb/valid.length)];
+            const gVals = valid.map(p=>p.grayscale);
+            const minG = Math.min(...gVals), maxG = Math.max(...gVals);
+            let minPt=null, maxPt=null, minV=Infinity, maxV=-Infinity;
+            for(const p of valid){ if(p.grayscale<minV){ minV=p.grayscale; minPt=p; } if(p.grayscale>maxV){ maxV=p.grayscale; maxPt=p; } }
+            let gradC = 0;
+            if(minPt && maxPt){
+                const d = coordDist(minPt.point, maxPt.point);
+                gradC = d>0 ? (maxV-minV)/d : 0;
+            }
+            return {
+                validPoints: valid, allPoints: all, avgRgb, avgHex: rgbToHex(avgRgb[0], avgRgb[1], avgRgb[2]),
+                gradientC: gradC, robustGray, imageType: classifyImageType(imgData, gradC), validCount: valid.length
+            };
+        }
+        return { validPoints:[], allPoints:all, robustGray, imageType, validCount:0 };
+    }
+
+    async function detectStarsCircular(){
+        if(!analysisResult || analysisResult.validCount===0) { starCount=0; return; }
+        processingMessage.textContent = '检测星星...';
+        const bg = analysisResult.avgRgb;
+        subtractedCanvas.width = imageCanvas.width; subtractedCanvas.height = imageCanvas.height;
+        const ctx = subtractedCanvas.getContext('2d'); ctx.putImageData(imageData, 0, 0);
+        const subData = (()=>{
+            const w = imageData.width, h = imageData.height, d = imageData.data;
+            const out = new ImageData(w, h);
+            for(let i=0; i<d.length; i+=4){
+                out.data[i] = Math.max(0, d[i]-bg[0]); out.data[i+1] = Math.max(0, d[i+1]-bg[1]);
+                out.data[i+2] = Math.max(0, d[i+2]-bg[2]); out.data[i+3] = d[i+3];
+            }
+            return out;
+        })();
+        ctx.putImageData(subData, 0, 0);
+        const w = subData.width, h = subData.height, d = subData.data;
+        const stars = [], detected = [];
+        const visited = new Array(h).fill().map(()=>new Array(w).fill(false));
+        const th = 30, bdiff = 5, sr = 10, MAX = 300;
+        outer: for(let y=0; y<h; y++) for(let x=0; x<w; x++){
+            if(visited[y][x]) continue;
+            const idx = (y*w+x)*4;
+            const col = [d[idx], d[idx+1], d[idx+2]];
+            const bright = rgbToGrayscale(col);
+            if(bright < th || calcDist(col, [0,0,0]) <= bdiff*(1+bright/255)) continue;
+            let cx = x, cy = y, found = false;
+            for(let dy=-sr; dy<=sr && !found; dy++) for(let dx=-sr; dx<=sr && !found; dx++){
+                if(dx===0 && dy===0) continue;
+                const nx = x+dx, ny = y+dy;
+                if(nx>=0 && nx<w && ny>=0 && ny<h){
+                    const ni = (ny*w+nx)*4;
+                    const nc = [d[ni], d[ni+1], d[ni+2]];
+                    const nb = rgbToGrayscale(nc);
+                    if(nb >= th && calcDist(nc, [0,0,0]) > bdiff*(1+nb/255)){
+                        let nsp = 0;
+                        for(let ddy=-sr; ddy<=sr; ddy++) for(let ddx=-sr; ddx<=sr; ddx++){
+                            if(ddx===0 && ddy===0) continue;
+                            const nnx = nx+ddx, nny = ny+ddy;
+                            if(nnx>=0 && nnx<w && nny>=0 && nny<h){
+                                const nni = (nny*w+nnx)*4;
+                                const nnc = [d[nni], d[nni+1], d[nni+2]];
+                                const nnb = rgbToGrayscale(nnc);
+                                if(nnb >= th && calcDist(nnc, [0,0,0]) > bdiff*(1+nnb/255)) nsp++;
+                            }
+                        }
+                        if(nsp >= 1){ cx = nx; cy = ny; found = true; break; }
+                    }
+                }
+            }
+            let dup = false;
+            for(const [sx,sy] of detected) if(Math.abs(cx-sx)<=5 && Math.abs(cy-sy)<=5){ dup=true; break; }
+            if(dup) continue;
+            const pts = [];
+            for(let dy=-sr; dy<=sr; dy++) for(let dx=-sr; dx<=sr; dx++){
+                if(dx===0 && dy===0) continue;
+                const nx = cx+dx, ny = cy+dy;
+                if(Math.sqrt(dx*dx+dy*dy) <= sr && nx>=0 && nx<w && ny>=0 && ny<h){
+                    const ni = (ny*w+nx)*4;
+                    const nc = [d[ni], d[ni+1], d[ni+2]];
+                    const nb = rgbToGrayscale(nc);
+                    if(nb >= th && calcDist(nc, [0,0,0]) > bdiff*(1+nb/255)) pts.push([nx, ny]);
+                }
+            }
+            if(pts.length >= 2){
+                const angles = pts.map(([px,py])=>{ let a=Math.atan2(py-cy, px-cx); if(a<0) a+=2*Math.PI; return a; });
+                const sectors = [0,0,0,0,0,0,0,0];
+                for(const a of angles) sectors[Math.floor(a/(Math.PI/4))%8]++;
+                if(sectors.filter(c=>c>0).length >= 3){
+                    detected.push([cx, cy]);
+                    stars.push({ center:[cx,cy], points:pts });
+                    visited[cy][cx] = true;
+                    for(const [px,py] of pts) if(py>=0 && py<h && px>=0 && px<w) visited[py][px] = true;
+                    if(stars.length >= MAX){ starDetectionTruncated = true; break outer; }
+                }
+            }
+        }
+        starCenters = stars; starCount = stars.length;
+        detectionParams.querySelector('.stat-value').textContent = `亮度阈值: ${th}, 背景差异: ${bdiff}, 搜索半径: ${sr}`;
+    }
+
+    async function markStars(){
+        if(!originalImage || starCount===0) return;
+        starCanvas.width = originalImage.width; starCanvas.height = originalImage.height;
+        const ctx = starCanvas.getContext('2d'); ctx.drawImage(originalImage, 0, 0);
+        for(const s of starCenters){
+            const [cx, cy] = s.center;
+            ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(cx, cy, 2, 0, 2*Math.PI); ctx.fill();
+            ctx.fillStyle = '#FFFF00'; for(const [x,y] of s.points) ctx.fillRect(x, y, 1, 1);
+            ctx.strokeStyle = '#FF0000'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, 10, 0, 2*Math.PI); ctx.stroke();
+        }
+        starMarkedImageUrl = starCanvas.toDataURL('image/png');
+    }
+
+    async function calculateStandardGrayValue(){
+        if(!imageData || starCount===0){ standardGrayValue = analysisResult ? analysisResult.robustGray : 0; excludedPixelCount = 0; return; }
+        const w = imageData.width, h = imageData.height, d = imageData.data;
+        const mask = new Array(h).fill().map(()=>new Array(w).fill(0));
+        let excl = 0;
+        for(const s of starCenters){
+            const [cx, cy] = s.center;
+            for(let dy=-2; dy<=2; dy++) for(let dx=-2; dx<=2; dx++){ const x=cx+dx, y=cy+dy; if(x>=0&&x<w&&y>=0&&y<h) mask[y][x]=1; }
+            for(const [px,py] of s.points) if(px>=0&&px<w&&py>=0&&py<h) mask[py][px]=1;
+            for(let dy=-10; dy<=10; dy++) for(let dx=-10; dx<=10; dx++){ if(Math.sqrt(dx*dx+dy*dy)<=10){ const x=cx+dx, y=cy+dy; if(x>=0&&x<w&&y>=0&&y<h) mask[y][x]=1; } }
+        }
+        let sum=0, inc=0;
+        for(let y=0; y<h; y++) for(let x=0; x<w; x++) {
+            if(mask[y][x]===0){ const i=(y*w+x)*4; sum+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; inc++; }
+            else excl++;
+        }
+        standardGrayValue = inc>0 ? sum/inc : 0; excludedPixelCount = excl;
+        excludedAreaStat.querySelector('.stat-value').textContent = `排除 ${excl} 像素 (${(excl/(w*h)*100).toFixed(2)}%)`;
+    }
+
+    function calculateMoonImpact(){
+        const now = new Date();
+        const knownNew = new Date(2023,0,21);
+        const days = Math.floor((now.getTime()-knownNew.getTime())/(86400000));
+        moonAge = ((days%29.53)+29.53)%29.53;
+        if(moonAge < 1.5 || moonAge > 28){ moonPhase='new'; moonIllumination=0; }
+        else if(moonAge < 6.5){ moonPhase='waxingCrescent'; moonIllumination=25; }
+        else if(moonAge < 8){ moonPhase='firstQuarter'; moonIllumination=50; }
+        else if(moonAge < 13.5){ moonPhase='waxingGibbous'; moonIllumination=75; }
+        else if(moonAge < 16){ moonPhase='full'; moonIllumination=100; }
+        else if(moonAge < 21){ moonPhase='waningGibbous'; moonIllumination=75; }
+        else if(moonAge < 23){ moonPhase='lastQuarter'; moonIllumination=50; }
+        else { moonPhase='waningCrescent'; moonIllumination=25; }
+        moonImpact = moonPhaseDatabase[moonPhase].impact;
+    }
+
+    function angularDist(alt1,az1,alt2,az2){
+        const a1=alt1*Math.PI/180, z1=az1*Math.PI/180, a2=alt2*Math.PI/180, z2=az2*Math.PI/180;
+        return Math.acos(Math.max(-1, Math.min(1, Math.sin(a1)*Math.sin(a2)+Math.cos(a1)*Math.cos(a2)*Math.cos(z1-z2))))*180/Math.PI;
+    }
+
+    async function calculateVisibleStars(){
+        if(!analysisResult) return;
+        const now = new Date();
+        const month = now.getMonth()+1;
+        let season;
+        if(month>=3 && month<=5) season='spring';
+        else if(month>=6 && month<=8) season='summer';
+        else if(month>=9 && month<=11) season='autumn';
+        else season='winter';
+        const stars = shanghaiStarsDatabase[season] || [];
+        const moonPos = { alt:45+Math.random()*30, az:Math.random()*360 };
+        const vis = [], invis = [];
+        stars.forEach(s => {
+            const dist = angularDist(s.alt, s.az, moonPos.alt, moonPos.az);
+            let v = s.visibility.includes(pollutionLevelInt);
+            if((moonPhase==='full'||moonPhase==='waxingGibbous'||moonPhase==='waningGibbous') && dist<30 && s.magnitude>3) v=false;
+            const obj = {...s, isVisible:v, angularDistanceToMoon:dist, moonPosition:moonPos};
+            if(v) vis.push(obj); else invis.push(obj);
+        });
+        observationTime.textContent = `${now.getFullYear()}年${month}月${now.getDate()}日`;
+        visibilityFilter.textContent = `光污染等级 ${pollutionLevel.toFixed(1)}，筛选可见星体`;
+        const phaseData = moonPhaseDatabase[moonPhase];
+        moonImpactInfo.style.display = 'block';
+        moonPhaseInfo.innerHTML = `<span class="moon-phase-icon ${phaseData.iconClass}"></span>${phaseData.name} (月龄:${moonAge.toFixed(1)}天)`;
+        moonImpactLevel.innerHTML = `影响: <span class="moon-impact-level impact-${moonImpact}">${moonImpact}</span>`;
+        moonAdvice.textContent = phaseData.advice;
+        visibleStarsPanel.style.display = 'block';
+        visibleStarsList.innerHTML = '';
+        [...vis, ...invis].forEach(s => {
+            const el = document.createElement('div');
+            el.className = `star-item ${s.isVisible?'visible':'invisible'}`;
+            el.innerHTML = `<div class="star-name">${s.name} <span class="star-visible-marker ${s.isVisible?'visible':'invisible'}">${s.isVisible?'● 可见':'● 不可见'}</span></div>
+                         <div class="star-details"><span class="star-constellation">${s.constellation}</span> <span class="star-magnitude">视星等: ${s.magnitude}</span> | ${s.type} | ${s.bestViewing}</div>`;
+            el.addEventListener('click', ()=> showStarDetail(s));
+            visibleStarsList.appendChild(el);
+        });
+        const seasonNamesFull = { spring:"春季", summer:"夏季", autumn:"秋季", winter:"冬季" };
+        const statEl = document.createElement('div');
+        statEl.className = 'star-item';
+        statEl.innerHTML = `<div class="star-name">${seasonNamesFull[season]}星体统计 (考虑月球影响)</div>
+        <div class="star-details">本季节共 ${stars.length} 个主要星体，其中 ${vis.length} 个在当前条件下可见，${invis.length} 个不可见</div>`;
+        visibleStarsList.appendChild(statEl);
+    }
+
+    function showStarDetail(star){
+        const phase = moonPhaseDatabase[moonPhase];
+        const altDesc = star.alt<15 ? "极低" : star.alt<30 ? "较低" : star.alt<60 ? "适中" : "很高";
+        const azDesc = ['北','东北','东','东南','南','西南','西','西北'][Math.floor(star.az/45)%8];
+        starDetailTitle.innerHTML = star.isVisible ? star.name : `${star.name} <span class="unobservable-badge">不可观测</span>`;
+        let tips = [];
+        if(star.angularDistanceToMoon < 15) tips.push("极近月亮，干扰严重");
+        else if(star.angularDistanceToMoon < 30) tips.push("靠近月亮，有一定干扰");
+        else tips.push("远离月亮，干扰小");
+        if(moonPhase === 'full') tips.push("满月强烈干扰");
+        if(star.magnitude > 3) tips.push("需望远镜");
+        else tips.push("肉眼可见");
+        starDetailContent.innerHTML = `
+            <div class="star-position-info">
+                <div class="position-card"><div class="position-card-title"><i class="fas fa-mountain"></i> 高度角</div><div class="position-value">${star.alt.toFixed(1)}°</div><div class="position-description">${altDesc}</div></div>
+                <div class="position-card"><div class="position-card-title"><i class="fas fa-compass"></i> 方位角</div><div class="position-value">${star.az.toFixed(1)}°</div><div class="position-description">${azDesc}</div></div>
+            </div>
+            <div class="moon-relation-info"><div class="position-value">距月亮 ${star.angularDistanceToMoon.toFixed(1)}°</div></div>
+            <div class="observation-tips"><div class="observation-tips-title"><i class="fas fa-lightbulb"></i> 建议</div>${tips.map((t,i)=>`<div class="tip-item"><div class="tip-icon">${i+1}</div><div class="tip-text">${t}</div></div>`).join('')}</div>`;
+        starDetailModal.style.display = 'flex';
+    }
+
+    function getConstellationInfo(level){
+        const l = Math.min(level, 13);
+        const data = constellationDatabase[l];
+        if(!data) return "";
+        let result = `肉眼可见: ${data.nakedEye.slice(0,5).join(", ")}`;
+        if(data.nakedEye.length > 5) result += ` 等${data.nakedEye.length}个星座`;
+        result += `\n望远镜可见: ${data.telescope.slice(0,3).join(", ")}`;
+        if(data.telescope.length > 3) result += ` 等${data.telescope.length}类天体`;
+        result += `\n${data.description}`;
+        return result;
+    }
+
+    function getCameraAdvice(level){
+        const l = Math.min(level, 13);
+        const data = cameraAdviceDatabase[l];
+        if(!data) return "";
+        let result = `ISO: ${data.iso}\n快门速度: ${data.shutter}\n光圈: ${data.aperture}\n建议: ${data.advice}\n技巧: ${data.tips.join(", ")}`;
+        return result;
+    }
+
+    function saveStarImage(){
+        if(!starMarkedImageUrl) return;
+        const a = document.createElement('a'); a.href = starMarkedImageUrl; a.download = 'stars.png'; a.click();
+    }
+
+    function updateResultsDisplay(){
+        if(!analysisResult) return;
+        recommendationContainer.style.display = 'block';
+        // 显示/隐藏严重警告
+        if(pollutionLevelInt >= 12) {
+            severeWarningBox.style.display = 'block';
+        } else {
+            severeWarningBox.style.display = 'none';
+        }
+        let txt = `找到 ${analysisResult.validCount} 个有效点\n类型: ${analysisResult.imageType}\n`;
+        if(isGradientImage) txt += '渐变型图片，跳过星星检测\n';
+        txt += `稳健灰度均值: ${analysisResult.robustGray.toFixed(2)}\n标准灰度值: ${standardGrayValue.toFixed(2)}\n`;
+        txt += `中心50x50灰度: ${centerGrayValue.toFixed(2)}\n`;
+        if(appliedAngle !== null){
+            txt += `仰角: ${appliedAngle.toFixed(1)}° `;
+            if(Math.abs(appliedAngle - 60) < 1e-6) txt += '(60°规则：仅减0.5不修正)';
+            else txt += '(直接d(x,θ)修正)';
+            txt += '\n';
+        }
+        txt += `光污染预测等级: ${pollutionLevel.toFixed(1)} (向下取整: ${pollutionLevelInt})`;
+        if(pollutionLevelInt >= 10) txt += '\n⚠ 已进入扩展等级，波特尔光害等级为9级';
+        txt += `\n描述: ${pollutionDescription}\n星星数量: ${starCount>=300?'300+':starCount}`;
+        if(starDetectionTruncated) txt += ' (已截断)';
+        resultsText.textContent = txt;
+
+        if(analysisResult.avgRgb){
+            imageTypeStat.querySelector('.stat-value').textContent = analysisResult.imageType;
+            avgRgbStat.querySelector('.stat-value').textContent = `(${analysisResult.avgRgb.join(', ')})`;
+            avgHexStat.querySelector('.stat-value').textContent = analysisResult.avgHex;
+            gradientStat.querySelector('.stat-value').textContent = analysisResult.gradientC.toFixed(6) + ' /px';
+        }
+        robustGrayStat.querySelector('.stat-value').textContent = analysisResult.robustGray.toFixed(2);
+        standardGrayStat.querySelector('.stat-value').textContent = standardGrayValue.toFixed(2);
+        centerGrayStat.querySelector('.stat-value').textContent = centerGrayValue.toFixed(2);
+
+        let levelStr = '';
+        if(pollutionLevelInt <= 9) levelStr = `等级 ${pollutionLevel.toFixed(1)}（波特尔光害 ${pollutionLevelInt} 级）`;
+        else levelStr = `等级 ${pollutionLevel.toFixed(1)}（扩展等级 ${pollutionLevelInt} 级）`;
+        let badgeHtml = '';
+        if(pollutionLevelInt >= 10) badgeHtml = ' <span class="extended-level-badge">已进入扩展等级</span>';
+        pollutionLevelStat.querySelector('.stat-value').innerHTML = levelStr + badgeHtml;
+
+        if(analysisResult.avgHex){
+            colorBlock.style.backgroundColor = analysisResult.avgHex;
+            colorInfo.querySelector('.stat-value').textContent = analysisResult.avgHex;
+        }
+        starCountDisplay.textContent = starCount>=300 ? '检测到的星星数量: 300+' : `检测到的星星数量: ${starCount}`;
+
+        const lvlInt = Math.min(pollutionLevelInt, 13);
+        const levelNames = ["极佳","优秀","良好","中等","一般","较差","差","很差","极差","光海","光极","光核","光阈"];
+        pollutionLevelDisplay.innerHTML = `等级 ${pollutionLevel.toFixed(1)} (${levelNames[lvlInt-1]||''})${pollutionLevelInt>=10?' <span class="extended-level-badge">已进入扩展等级</span>':''}`;
+        pollutionLevelDisplay.className = `pollution-level level-${lvlInt}`;
+        pollutionDescriptionDisplay.textContent = pollutionDescription;
+        constellationInfo.textContent = getConstellationInfo(lvlInt);
+        cameraAdvice.textContent = getCameraAdvice(lvlInt);
+
+        if(!isGradientImage && starCount>0){
+            starPointsContainer.style.display = 'block';
+            starPointsList.innerHTML = '';
+            for(let i=0; i<Math.min(10, starCount); i++){
+                const s = starCenters[i];
+                const item = document.createElement('div');
+                item.textContent = `星星${i+1}: (${s.center[0]}, ${s.center[1]})`;
+                starPointsList.appendChild(item);
+            }
+        }
+    }
+
+    function copyColorToClipboard(){
+        if(!analysisResult || !analysisResult.avgHex) return;
+        navigator.clipboard.writeText(analysisResult.avgHex).then(()=>alert('已复制'));
+    }
+
+    window.addEventListener('DOMContentLoaded', ()=>{});
+</script>
+</body>
+</html>
